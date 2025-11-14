@@ -1,0 +1,57 @@
+:root {
+    --sync-primary: #18B6FA; /* Azul vibrante */
+    --sync-secondary-light: #A6E4FA;
+    --sync-secondary-dark: #04248C; /* Azul oscuro/acento */
+    --sync-neutral-dark: #424C5E; /* Texto principal */
+    --sync-neutral-mid: #6679A9;
+    --sync-neutral-light: #B4B4B9;
+}
+
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--sync-neutral-dark); /* Color de texto por defecto */
+}
+
+.btn-primary {
+    background-color: var(--sync-primary);
+    border-color: var(--sync-primary);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--sync-secondary-dark); /* Color al pasar el mouse */
+    border-color: var(--sync-secondary-dark);
+    color: #ffffff;
+}
+
+a, .nav-link:hover {
+    color: var(--sync-primary);
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
+}
+
+.nav-link.text-dark:hover {
+    color: var(--sync-primary) !important;
+}

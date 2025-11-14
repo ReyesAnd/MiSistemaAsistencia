@@ -1,0 +1,132 @@
+﻿@model MiSistemaAsistencia.Web.Models.EditUserViewModel
+@{
+    ViewData["Title"] = "Editar Empleado";
+}
+
+
+<style>
+    .edit-header-text {
+        color: var(--sync-secondary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .edit-logo {
+        max-height: 30px;
+        margin-bottom: 1rem;
+    }
+
+    .edit-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .btn-primary {
+        background-color: var(--sync-primary);
+        border: none;
+        font-weight: 600;
+        padding: 10px;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--sync-secondary-dark);
+    }
+
+    .form-select {
+        height: 58px;
+    }
+</style>
+
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+        <div class="card edit-card my-5">
+            <div class="card-body p-4 p-sm-5">
+
+                <div class="text-center">
+                    <img src="/img/LogoNoFondo.png" alt="Syncronix Logo" class="edit-logo" />
+                    <h2 class="edit-header-text">@ViewData["Title"]</h2>
+                </div>
+
+                <form method="post" asp-action="EditUser">
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="EmployeeNumber" />
+
+                    <hr />
+                    <h5 class="mb-3">Información Personal</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="FirstName" class="form-control" />
+                            <label asp-for="FirstName" class="ms-2"></label>
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="LastName" class="form-control" />
+                            <label asp-for="LastName" class="ms-2"></label>
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Email" class="form-control" autocomplete="username" />
+                        <label asp-for="Email"></label>
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <hr />
+                    <h5 class="mb-3">Información Laboral y de Sistema</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="EmployeeNumber" class="form-control" readonly />
+                            <label asp-for="EmployeeNumber" class="ms-2"></label>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="RoleName"></label>
+                            <select asp-for="RoleName" class="form-select" asp-items="@((SelectList)ViewData["RoleName"])"></select>
+                            <span asp-validation-for="RoleName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DepartmentId"></label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="@((SelectList)ViewData["DepartmentId"])"></select>
+                            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="WorkScheduleId"></label>
+                            <select asp-for="WorkScheduleId" class="form-select" asp-items="@((SelectList)ViewData["WorkScheduleId"])">
+                                <option value="">-- Sin Horario Asignado --</option>
+                            </select>
+                            <span asp-validation-for="WorkScheduleId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label asp-for="PositionId"></label>
+                            <select asp-for="PositionId" class="form-select" asp-items="@((SelectList)ViewData["PositionId"])"></select>
+                            <span asp-validation-for="PositionId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-primary mt-3">Guardar Cambios</button>
+                    <a asp-action="UserManagement" class="btn btn-link w-100 mt-2 text-muted">Cancelar</a>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

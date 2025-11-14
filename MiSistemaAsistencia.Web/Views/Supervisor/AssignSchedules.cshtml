@@ -1,0 +1,36 @@
+﻿@model IEnumerable<MiSistemaAsistencia.Infrastructure.ApplicationUser>
+@{
+    ViewData["Title"] = "Asignar Horarios";
+}
+
+<h1>@ViewData["Title"]</h1>
+<p>Asigne un horario de trabajo predeterminado a cada empleado.</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Empleado</th>
+            <th>Horario Actual</th>
+            <th>Asignar Nuevo Horario</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.FirstName @user.LastName</td>
+                <td>@(user.WorkSchedule?.Name ?? "N/A")</td>
+                <td>
+                    <form asp-action="AssignScheduleToUser" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@user.Id" />
+                        <select name="scheduleId" class="form-select-sm" asp-items="@(new SelectList(ViewBag.Schedules, "Id", "Name"))">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Asignar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

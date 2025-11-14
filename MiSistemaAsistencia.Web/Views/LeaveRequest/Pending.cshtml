@@ -1,0 +1,39 @@
+﻿@model IEnumerable<MiSistemaAsistencia.Web.ViewModels.LeaveRequestViewModel>
+@{
+    ViewData["Title"] = "Solicitudes Pendientes";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Empleado</th>
+            <th>Tipo</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var request in Model)
+        {
+            <tr>
+                <td>@request.ApplicantName</td>
+                <td>@request.Type</td>
+                <td>@request.StartDate.ToShortDateString()</td>
+                <td>@request.EndDate.ToShortDateString()</td>
+                <td>
+                    <form asp-action="Approve" asp-route-id="@request.RequestId" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-success">Aprobar</button>
+                    </form>
+                    <form asp-action="Reject" asp-route-id="@request.RequestId" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-danger">Rechazar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

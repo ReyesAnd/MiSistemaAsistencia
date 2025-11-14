@@ -1,0 +1,41 @@
+﻿@model MiSistemaAsistencia.Web.Models.EditScheduleViewModel
+@{
+    ViewData["Title"] = "Editar Horario";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="EditSchedule">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExpectedCheckIn" class="form-label"></label>
+                <input asp-for="ExpectedCheckIn" class="form-control" type="time" />
+                <span asp-validation-for="ExpectedCheckIn" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExpectedCheckOut" class="form-label"></label>
+                <input asp-for="ExpectedCheckOut" class="form-control" type="time" />
+                <span asp-validation-for="ExpectedCheckOut" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a asp-action="Schedules" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

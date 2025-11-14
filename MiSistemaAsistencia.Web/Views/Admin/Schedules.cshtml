@@ -1,0 +1,42 @@
+﻿@model IEnumerable<MiSistemaAsistencia.Domain.WorkSchedule>
+@{
+    ViewData["Title"] = "Gestión de Horarios";
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="CreateSchedule" class="btn btn-primary">Crear Nuevo Horario</a>
+</p>
+
+<table class="table table-hover table-striped">
+    <thead>
+        <tr>
+            <th>Nombre del Horario</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var schedule in Model)
+        {
+            <tr>
+                <td>@schedule.Name</td>
+                <td>@schedule.ExpectedCheckIn.ToString(@"hh\:mm")</td>
+                <td>@schedule.ExpectedCheckOut.ToString(@"hh\:mm")</td>
+                <td class="d-flex gap-2">
+                    <a asp-action="EditSchedule" asp-route-id="@schedule.Id" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                    <form asp-action="DeleteSchedule" asp-route-id="@schedule.Id" method="post" style="display:inline;"
+                          onsubmit="return confirm('¿Está seguro de que desea eliminar el horario @schedule.Name?');">
+
+                        <input type="hidden" name="Id" value="@schedule.Id" />
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

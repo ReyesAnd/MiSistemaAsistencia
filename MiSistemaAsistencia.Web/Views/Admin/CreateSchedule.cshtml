@@ -1,0 +1,46 @@
+﻿@model MiSistemaAsistencia.Domain.WorkSchedule
+@{
+    ViewData["Title"] = "Crear Nuevo Horario";
+}
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">@ViewData["Title"]</h3>
+            </div>
+            <div class="card-body">
+
+                <form asp-action="CreateSchedule">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ExpectedCheckIn" class="form-label"></label>
+                        <input asp-for="ExpectedCheckIn" class="form-control" type="time" />
+                        <span asp-validation-for="ExpectedCheckIn" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ExpectedCheckOut" class="form-label"></label>
+                        <input asp-for="ExpectedCheckOut" class="form-control" type="time" />
+                        <span asp-validation-for="ExpectedCheckOut" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Guardar Horario</button>
+                    <a asp-action="Schedules" class="btn btn-secondary w-100 mt-2">Volver a Horarios</a>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

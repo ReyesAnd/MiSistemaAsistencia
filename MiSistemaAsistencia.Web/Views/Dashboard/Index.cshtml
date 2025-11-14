@@ -1,0 +1,276 @@
+﻿@* @{
+    ViewData["Title"] = "Mi Panel de Control";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Bienvenido, @ViewBag.UserName</h1>
+    <p>Utiliza los botones para registrar tu jornada laboral.</p>
+</div>
+
+<hr />
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger text-center">@TempData["ErrorMessage"]</div>
+        }
+    </div>
+</div>
+
+@if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center bg-primary text-white">
+                    <h4>Registro de Asistencia</h4>
+                </div>
+                <div class="card-body text-center p-4">
+                    <p>Presiona el botón correspondiente para registrar tu entrada o salida.</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+
+                        <form asp-controller="Dashboard" asp-action="ClockIn" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                Registrar ENTRADA
+                            </button>
+                        </form>
+
+                        <form asp-controller="Dashboard" asp-action="ClockOut" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger btn-lg px-5">
+                                Registrar SALIDA
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+} *@
+
+@model MiSistemaAsistencia.Web.Models.EmployeeDashboardViewModel
+@{
+    ViewData["Title"] = "Panel de Control";
+
+    MiSistemaAsistencia.Web.Models.AdminDashboardViewModel adminModel = null;
+    if (User.IsInRole("Administrador") && ViewData["AdminModel"] != null)
+    {
+        adminModel = (MiSistemaAsistencia.Web.Models.AdminDashboardViewModel)ViewData["AdminModel"];
+    }
+}
+
+<div class="text-center">
+    <h1 class="display-4">Bienvenido, @ViewBag.UserName</h1>
+    <p>Utiliza los botones para navegar por tu entorno laboral.</p>
+</div>
+
+<hr />
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger text-center">@TempData["ErrorMessage"]</div>
+        }
+    </div>
+</div>
+
+@if (User.IsInRole("Administrador") && adminModel != null)
+{
+    <h1 class="mb-4">Panel de Administración</h1>
+
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-8">
+                            <h2 class="display-5 fw-bold">@adminModel.EmployeesPresent</h2>
+                            <p class="mb-0">Empleados Presentes</p>
+                        </div>
+                        <div class="col-4 text-end"><i class="fas fa-users fa-3x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-8">
+                            <h2 class="display-5 fw-bold">@adminModel.EmployeesAbsentToday</h2>
+                            <p class="mb-0">Empleados Ausentes</p>
+                        </div>
+                        <div class="col-4 text-end"><i class="fas fa-user-times fa-3x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-8">
+                            <h2 class="display-5 fw-bold">@adminModel.LateArrivalsToday</h2>
+                            <p class="mb-0">Llegadas Tardías (Hoy)</p>
+                        </div>
+                        <div class="col-4 text-end"><i class="fas fa-clock fa-3x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-8">
+                            <h2 class="display-5 fw-bold">@adminModel.PendingApprovalRequests</h2>
+                            <p class="mb-0">Solicitudes por Aprobar</p>
+                        </div>
+                        <div class="col-4 text-end"><i class="fas fa-bell fa-3x"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">Actividad Reciente</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        @if (!adminModel.RecentActivity.Any())
+                        {
+                            <li class="list-group-item text-muted">No hay actividad reciente registrada hoy.</li>
+                        }
+                        @foreach (var activity in adminModel.RecentActivity.OrderByDescending(a => a.Time).Take(10))
+                        {
+                            <li class="list-group-item">
+                                @if (activity.Type == "Entrada")
+                                {
+                                    <span class="badge bg-success">Entrada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Salida</span>
+                                }
+                                <span class="fw-bold">@activity.EmployeeName</span> registró @activity.Type a las @activity.Time.ToShortTimeString().
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+else if (Model != null)
+{
+    @if (Model != null)
+    {
+        <h3 class="mb-3">Tu Resumen</h3>
+        <div class="row">
+
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-muted">Estado Actual</h5>
+                        @if (Model.CurrentStatus == "Activo")
+                        {
+                            <h2 class="fw-bold text-success">@Model.CurrentStatus</h2>
+                            @if (Model.LastCheckInTime.HasValue)
+                            {
+                                if (Model.LastCheckInTime.Value.Date == DateTime.Today)
+                                {
+                                    <small>Entrada registrada hoy a las @Model.LastCheckInTime.Value.ToShortTimeString()</small>
+                                }
+                                else
+                                {
+                                    <small class="text-danger fw-bold">
+                                        ¡Entrada abierta desde el @Model.LastCheckInTime.Value.ToString("dd/MM/yyyy")
+                                        a las @Model.LastCheckInTime.Value.ToShortTimeString()!
+                                    </small>
+                                    <small class="d-block text-muted">(Debe registrar salida)</small>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <h2 class="fw-bold text-danger">@Model.CurrentStatus</h2>
+                            if (Model.LastCheckInTime.HasValue)
+                            {
+                                <small>Último registro: @Model.LastCheckInTime.Value.ToShortDateString()</small>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-muted">Vacaciones Restantes</h5>
+                        <h1 class="display-4 fw-bold">@Model.AvailableVacationDays</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-muted">Horas (Semana)</h5>
+                        <h1 class="display-4 fw-bold">@Model.HoursWorkedThisWeek</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-muted">Solicitudes Pendientes</h5>
+                        <h1 class="display-4 fw-bold">@Model.PendingLeaveRequests</h1>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <hr class="my-4" />
+    }
+}
+
+@if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
+{
+    <div class="row justify-content-center mt-5 mb-5">
+
+        <div class="col-md-6 text-center">
+                <form asp-action="ClockIn" method="post" class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg shadow-lg py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i> REGISTRAR ENTRADA
+                    </button>
+                </form>
+            
+                <form asp-action="ClockOut" method="post" class="d-grid">
+                    <button type="submit" class="btn btn-danger btn-lg shadow-lg py-3">
+                        <i class="fas fa-sign-out-alt me-2"></i> REGISTRAR SALIDA
+                    </button>
+                </form>
+        </div>
+    </div>
+}

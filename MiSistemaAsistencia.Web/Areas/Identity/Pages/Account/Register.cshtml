@@ -1,0 +1,145 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Registrar Empleado";
+}
+
+<style>
+    .register-header-text {
+        color: var(--sync-secondary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .register-logo {
+        max-height: 30px;
+        margin-bottom: 1rem;
+    }
+
+    .register-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .btn-primary {
+        background-color: var(--sync-primary);
+        border: none;
+        font-weight: 600;
+        padding: 10px;
+    }
+
+        .btn-primary:hover {
+            background-color: var(--sync-secondary-dark);
+        }
+    .form-select {
+        height: 58px;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+        <div class="card register-card my-5">
+            <div class="card-body p-4 p-sm-5">
+
+                <div class="text-center">
+                    <img src="/img/LogoNoFondo.png" alt="Syncronix Logo" class="register-logo" />
+                    <h2 class="register-header-text">Registrar Nuevo Empleado</h2>
+                </div>
+
+                <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                    <hr />
+                    <h5 class="mb-3">Información Personal</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="Input.FirstName" class="form-control" />
+                            <label asp-for="Input.FirstName" class="ms-2"></label>
+                            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="Input.LastName" class="form-control" />
+                            <label asp-for="Input.LastName" class="ms-2"></label>
+                            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <h5 class="mb-3">Información Laboral y de Sistema</h5>
+
+                    <div class="row">
+                        @* <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="Input.EmployeeNumber" class="form-control" />
+                            <label asp-for="Input.EmployeeNumber" class="ms-2"></label>
+                            <span asp-validation-for="Input.EmployeeNumber" class="text-danger"></span>
+                        </div> *@
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.PositionId"></label>
+                            <select asp-for="Input.PositionId" class="form-select" asp-items="@Model.PositionOptions">
+                                <option value="">Seleccione un puesto...</option>
+                            </select>
+                            <span asp-validation-for="Input.PositionId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.RoleName"></label>
+                            <select asp-for="Input.RoleName" class="form-select" asp-items="@Model.RoleOptions">
+                                <option value="">Seleccione un rol...</option>
+                            </select>
+                            <span asp-validation-for="Input.RoleName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.DepartmentId"></label>
+                            <select asp-for="Input.DepartmentId" class="form-select" asp-items="@Model.DepartmentOptions">
+                                <option value="">Seleccione departamento...</option>
+                            </select>
+                            <span asp-validation-for="Input.DepartmentId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.WorkScheduleId"></label>
+                            <select asp-for="Input.WorkScheduleId" class="form-select" asp-items="@Model.ScheduleOptions">
+                                <option value="">Seleccione horario...</option>
+                            </select>
+                            <span asp-validation-for="Input.WorkScheduleId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <h5 class="mb-3">Credenciales</h5>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email" class="form-control" autocomplete="username" />
+                        <label asp-for="Input.Email"></label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
+                            <label asp-for="Input.Password" class="ms-2"></label>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
+                            <label asp-for="Input.ConfirmPassword" class="ms-2"></label>
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary mt-3">Registrar Empleado</button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

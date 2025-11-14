@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Bienvenido a Syncronix";
+}
+
+<style>
+    .hero-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        padding: 80px 20px;
+        margin-top: 20px;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+    }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--sync-secondary-dark);
+        }
+
+        .hero-section .lead {
+            font-size: 1.25rem;
+            color: var(--sync-neutral-mid);
+            margin: 20px 0 30px 0;
+            max-width: 600px;
+        }
+
+        .hero-section .btn-login-cta {
+            padding: 12px 35px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            background-color: var(--sync-primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+            .hero-section .btn-login-cta:hover {
+                background-color: var(--sync-secondary-dark);
+                color: white;
+            }
+</style>
+
+<div class="hero-section">
+    <h1>Bienvenido a Syncronix</h1>
+    <p class="lead">
+        Gestión de asistencia inteligente. Registra tus entradas, salidas y gestiona tus solicitudes en un solo lugar.
+    </p>
+
+    <a asp-area="Identity" asp-page="/Account/Login" class="btn-login-cta">
+        Iniciar Sesión
+    </a>
+</div>
