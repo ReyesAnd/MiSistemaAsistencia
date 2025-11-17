@@ -35,7 +35,7 @@ namespace MiSistemaAsistencia.Web.Controllers
         }
 
         // GET: /LeaveRequest/Create
-        [Authorize(Roles = "Empleado")]
+        [Authorize(Roles = "Empleado,Supervisor")]
         public IActionResult Create()
         {
             return View();
@@ -44,7 +44,7 @@ namespace MiSistemaAsistencia.Web.Controllers
         // POST: /LeaveRequest/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Empleado")]
+        [Authorize(Roles = "Empleado,Supervisor")]
         public async Task<IActionResult> Create(LeaveRequest request)
         {
             if (ModelState.IsValid)

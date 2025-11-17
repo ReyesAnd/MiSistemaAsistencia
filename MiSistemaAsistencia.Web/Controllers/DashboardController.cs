@@ -57,16 +57,19 @@ namespace MiSistemaAsistencia.Web.Controllers
                     if (lastRecord.CheckOutTime == null)
                     {
                         viewModel.CurrentStatus = "Activo";
+                        viewModel.IsCurrentlyCheckedIn = true;
                     }
                     else
                     {
                         viewModel.CurrentStatus = "Inactivo";
+                        viewModel.IsCurrentlyCheckedIn = false;
                     }
                     viewModel.LastCheckInTime = lastRecord.CheckInTime;
                 }
                 else
                 {
                     viewModel.CurrentStatus = "Sin Registro";
+                    viewModel.IsCurrentlyCheckedIn = false;
                 }
 
                 DateTime today = DateTime.Today;
