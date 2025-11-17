@@ -1,61 +1,4 @@
-﻿@* @{
-    ViewData["Title"] = "Mi Panel de Control";
-}
-
-<div class="text-center">
-    <h1 class="display-4">Bienvenido, @ViewBag.UserName</h1>
-    <p>Utiliza los botones para registrar tu jornada laboral.</p>
-</div>
-
-<hr />
-
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger text-center">@TempData["ErrorMessage"]</div>
-        }
-    </div>
-</div>
-
-@if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
-{
-    <div class="row justify-content-center mt-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header text-center bg-primary text-white">
-                    <h4>Registro de Asistencia</h4>
-                </div>
-                <div class="card-body text-center p-4">
-                    <p>Presiona el botón correspondiente para registrar tu entrada o salida.</p>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-
-                        <form asp-controller="Dashboard" asp-action="ClockIn" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-success btn-lg px-5">
-                                Registrar ENTRADA
-                            </button>
-                        </form>
-
-                        <form asp-controller="Dashboard" asp-action="ClockOut" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-danger btn-lg px-5">
-                                Registrar SALIDA
-                            </button>
-                        </form>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-} *@
-
-@model MiSistemaAsistencia.Web.Models.EmployeeDashboardViewModel
+﻿@model MiSistemaAsistencia.Web.Models.EmployeeDashboardViewModel
 @{
     ViewData["Title"] = "Panel de Control";
 
@@ -253,24 +196,34 @@ else if (Model != null)
         </div>
         <hr class="my-4" />
     }
-}
+    @if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
+    {
+        <div class="row justify-content-center mt-5 mb-5">
 
-@if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
-{
-    <div class="row justify-content-center mt-5 mb-5">
+            <div class="col-md-6 text-center">
 
-        <div class="col-md-6 text-center">
-                <form asp-action="ClockIn" method="post" class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg shadow-lg py-3">
-                        <i class="fas fa-sign-in-alt me-2"></i> REGISTRAR ENTRADA
-                    </button>
-                </form>
-            
-                <form asp-action="ClockOut" method="post" class="d-grid">
-                    <button type="submit" class="btn btn-danger btn-lg shadow-lg py-3">
-                        <i class="fas fa-sign-out-alt me-2"></i> REGISTRAR SALIDA
-                    </button>
-                </form>
+                @if (!Model.IsCurrentlyCheckedIn)
+                {
+
+                    <form asp-action="ClockIn" method="post" class="d-grid"
+                          onsubmit="return confirm('¿Está seguro que desea registrar su ENTRADA?');">
+
+                        <button type="submit" class="btn btn-success btn-lg shadow-lg py-3">
+                            <i class="fas fa-sign-in-alt me-2"></i> REGISTRAR ENTRADA
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="ClockOut" method="post" class="d-grid"
+                          onsubmit="return confirm('¿Está seguro que desea registrar su SALIDA?');">
+
+                        <button type="submit" class="btn btn-danger btn-lg shadow-lg py-3">
+                            <i class="fas fa-sign-out-alt me-2"></i> REGISTRAR SALIDA
+                        </button>
+                    </form>
+                }
+            </div>
         </div>
-    </div>
+    }
 }

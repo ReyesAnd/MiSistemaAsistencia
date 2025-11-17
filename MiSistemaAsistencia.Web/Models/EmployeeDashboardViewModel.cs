@@ -17,5 +17,7 @@ namespace MiSistemaAsistencia.Web.Models
 
         // Tarjeta de Solicitudes
         public int PendingLeaveRequests { get; set; }
+
+        public bool IsCurrentlyCheckedIn { get; set; }
     }
 }
