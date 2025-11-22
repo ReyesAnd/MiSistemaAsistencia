@@ -4,6 +4,7 @@ using MiSistemaAsistencia.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MiSistemaAsistencia.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251117184417_AddUserSupervisorHierarchy")]
+    partial class AddUserSupervisorHierarchy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,6 +222,7 @@ namespace MiSistemaAsistencia.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SupervisorId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -396,7 +400,7 @@ namespace MiSistemaAsistencia.Infrastructure.Migrations
 
             modelBuilder.Entity("MiSistemaAsistencia.Domain.LeaveRequest", b =>
                 {
-                    b.HasOne("MiSistemaAsistencia.Infrastructure.ApplicationUser", "RequestUser")
+                    b.HasOne("MiSistemaAsistencia.Infrastructure.ApplicationUser", null)
                         .WithMany("LeaveRequests")
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -406,8 +410,6 @@ namespace MiSistemaAsistencia.Infrastructure.Migrations
                         .WithMany("Approvals")
                         .HasForeignKey("ApprovedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("RequestUser");
                 });
 
             modelBuilder.Entity("MiSistemaAsistencia.Infrastructure.ApplicationUser", b =>
@@ -427,7 +429,8 @@ namespace MiSistemaAsistencia.Infrastructure.Migrations
                     b.HasOne("MiSistemaAsistencia.Infrastructure.ApplicationUser", "Supervisor")
                         .WithMany()
                         .HasForeignKey("SupervisorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("MiSistemaAsistencia.Domain.WorkSchedule", "WorkSchedule")
                         .WithMany()

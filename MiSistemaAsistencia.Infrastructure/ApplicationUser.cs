@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using MiSistemaAsistencia.Domain;
+using MiSistemaAsistencia.Domain.Interfaces;
 
 namespace MiSistemaAsistencia.Infrastructure
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser, IHierarchicalUser
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -21,9 +22,11 @@ namespace MiSistemaAsistencia.Infrastructure
         public int AvailableVacationDays { get; set; }
         public int? WorkScheduleId { get; set; }
         public WorkSchedule WorkSchedule { get; set; }
+        public string? SupervisorId { get; set; }
 
         public ICollection<AttendanceRecord> AttendanceRecords { get; set; }
         public ICollection<LeaveRequest> LeaveRequests { get; set; }
         public ICollection<LeaveRequest> Approvals { get; set; }
+        public virtual ApplicationUser? Supervisor { get; set; }
     }
 }

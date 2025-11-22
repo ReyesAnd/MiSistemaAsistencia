@@ -97,6 +97,7 @@ namespace MiSistemaAsistencia.Web.Controllers
             {
                 var adminViewModel = new AdminDashboardViewModel();
                 var today = DateTime.Today;
+                var now = DateTimeOffset.UtcNow;
 
                 var lateArrivalsQuery = from attendance in _context.AttendanceRecords
                                         join user in _context.Users on attendance.ApplicationUserId equals user.Id
@@ -114,7 +115,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                 adminViewModel.LateArrivalsToday = lateCount;
 
                 // Totales
-                adminViewModel.TotalEmployees = await _userManager.Users.CountAsync();
+                adminViewModel.TotalEmployees = await _userManager.Users.CountAsync(u => u.LockoutEnd == null || u.LockoutEnd <= now);
 
                 // Solicitudes Pendientes
                 adminViewModel.PendingApprovalRequests = await _context.LeaveRequests
@@ -122,10 +123,12 @@ namespace MiSistemaAsistencia.Web.Controllers
 
                 // Empleados Presentes
                 adminViewModel.EmployeesPresent = await _context.AttendanceRecords
-                    .CountAsync(r => r.CheckOutTime == null);
+                    .CountAsync(r => r.CheckInTime.Date == today && r.CheckOutTime == null);
 
                 // Empleados Ausentes
                 adminViewModel.EmployeesAbsentToday = adminViewModel.TotalEmployees - adminViewModel.EmployeesPresent;
+
+                if (adminViewModel.EmployeesAbsentToday < 0) adminViewModel.EmployeesAbsentToday = 0;
 
                 // Cargar los últimos 10 registros.
                 var recentActivityQuery = from attendance in _context.AttendanceRecords

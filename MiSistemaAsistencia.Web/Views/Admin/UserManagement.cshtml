@@ -1,4 +1,4 @@
-﻿@model IEnumerable<MiSistemaAsistencia.Infrastructure.ApplicationUser>
+﻿@model IEnumerable<MiSistemaAsistencia.Web.ViewModels.UserRoleViewModel>
 @{
     ViewData["Title"] = "Gestión de Usuarios";
     ViewData["CurrentFilter"] = Context.Request.Query["searchString"];
@@ -33,6 +33,7 @@
             <th>Email</th>
             <th>Num. Empleado</th>
             <th>Puesto</th>
+            <th>Rol</th>
             <th>Estado</th>
             <th>Acciones</th>
         </tr>
@@ -44,7 +45,9 @@
                 <td>@user.FirstName @user.LastName</td>
                 <td>@user.Email</td>
                 <td>@user.EmployeeNumber</td>
-                <td>@user.Position?.Name</td>
+                <td>@user.PositionName</td>
+                <td>@user.SystemRole</td>
+                @* <td>@user.SupervisorId</td> *@
                 <td>
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
@@ -57,19 +60,19 @@
                 </td>
 
                 <td class="d-flex gap-2">
-                    <a asp-action="EditUser" asp-route-id="@user.Id"
+                    <a asp-action="EditUser" asp-route-id="@user.UserId"
                        class="btn btn-sm btn-outline-secondary">Editar</a>
 
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
-                        <form asp-action="ActivateUser" asp-route-id="@user.Id" method="post">
+                        <form asp-action="ActivateUser" asp-route-id="@user.UserId" method="post">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
                         </form>
                     }
                     else
                     {
-                        <form asp-action="DeactivateUser" asp-route-id="@user.Id" method="post"
+                        <form asp-action="DeactivateUser" asp-route-id="@user.UserId" method="post"
                               onsubmit="return confirm('¿Está seguro de que desea desactivar este usuario?');">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>

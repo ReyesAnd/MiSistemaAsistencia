@@ -1,0 +1,121 @@
+﻿@using MiSistemaAsistencia.Domain
+@model IEnumerable<MiSistemaAsistencia.Domain.LeaveRequest>
+
+@{
+    ViewData["Title"] = "Mis Solicitudes";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Mis Solicitudes</h1>
+    @* <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+        <li class="breadcrumb-item active">Historial de Solicitudes</li>
+    </ol> *@
+
+    <div class="mb-4">
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Solicitud
+        </a>
+    </div>
+
+    <div class="card mb-4 shadow">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Historial de Permisos y Vacaciones
+        </div>
+        <div class="card-body">
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Aún no has realizado ninguna solicitud. ¡Usa el botón "Nueva Solicitud" para empezar!
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-bordered" id="datatablesSimple">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Fecha Solicitud</th>
+                                <th>Desde</th>
+                                <th>Hasta</th>
+                                <th>Días</th>
+                                <th>Estado</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@item.Type</td>
+
+                                    <td>@item.RequestDate.ToShortDateString()</td>
+
+                                    <td>@item.StartDate.ToShortDateString()</td>
+                                    <td>@item.EndDate.ToShortDateString()</td>
+
+                                    <td>
+                                        @{
+                                            var dias = (item.EndDate - item.StartDate).TotalDays + 1;
+                                        }
+                                        @dias días
+                                    </td>
+
+                                    <td class="text-center">
+                                        @switch (item.Status)
+                                        {
+                                            case LeaveStatus.Pending:
+                                                <span class="badge bg-warning text-dark rounded-pill">
+                                                    <i class="fas fa-clock me-1"></i>Pendiente
+                                                </span>
+                                                break;
+                                            case LeaveStatus.Approved:
+                                                <span class="badge bg-success rounded-pill">
+                                                    <i class="fas fa-check-circle me-1"></i>Aprobado
+                                                </span>
+                                                break;
+                                            case LeaveStatus.Rejected:
+                                                <span class="badge bg-danger rounded-pill">
+                                                    <i class="fas fa-times-circle me-1"></i>Rechazado
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary rounded-pill">@item.Status</span>
+                                                break;
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (item.Status == LeaveStatus.Rejected)
+                                        {
+                                            <div class="text-danger small fw-bold">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                Solicitud rechazada/revocada.
+                                                <br />
+                                                Por favor, comuníquese con su supervisor.
+                                            </div>
+                                        }
+                                        else if (item.Status == LeaveStatus.Approved)
+                                        {
+                                            <span class="text-success small">
+                                                <i class="fas fa-thumbs-up"></i> Disfrute su tiempo.
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

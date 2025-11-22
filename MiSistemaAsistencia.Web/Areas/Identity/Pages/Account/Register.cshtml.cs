@@ -27,6 +27,7 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmployeeNumberService _numberService;
 
+
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
@@ -102,6 +103,9 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
             [Required(ErrorMessage = "Debe seleccionar un puesto")]
             [Display(Name = "Puesto")]
             public int PositionId { get; set; }
+
+            [Display(Name = "Supervisor/Administrador")]
+            public string? SupervisorId { get; set; }
         }
 
 
@@ -114,6 +118,12 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
             DepartmentOptions = new SelectList(await _context.Departments.ToListAsync(), "Id", "Name");
             ScheduleOptions = new SelectList(await _context.WorkSchedules.ToListAsync(), "Id", "Name");
             PositionOptions = new SelectList(await _context.Positions.ToListAsync(), "Id", "Name");
+
+            var supervisorUsers = await _userManager.GetUsersInRoleAsync("Supervisor");
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Administrador");
+
+            ViewData["SupervisorList"] = new SelectList(supervisorUsers, "Id", "Email");
+            ViewData["AdminList"] = new SelectList(adminUsers, "Id", "Email");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -136,7 +146,8 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
                     PositionId = Input.PositionId,
                     HireDate = DateTime.Today, 
                     AvailableVacationDays = 0, 
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    SupervisorId = Input.SupervisorId
                 };
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
@@ -156,10 +167,7 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
                 }
             }
 
-            RoleOptions = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", Input.RoleName);
-            DepartmentOptions = new SelectList(await _context.Departments.ToListAsync(), "Id", "Name", Input.DepartmentId);
-            ScheduleOptions = new SelectList(await _context.WorkSchedules.ToListAsync(), "Id", "Name", Input.WorkScheduleId);
-            PositionOptions = new SelectList(await _context.Positions.ToListAsync(), "Id", "Name", Input.PositionId);
+            await OnGetAsync(returnUrl);
 
             return Page();
         }

@@ -33,6 +33,12 @@ namespace MiSistemaAsistencia.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<LeaveRequest>()
+                .HasOne(r => (ApplicationUser)r.RequestUser)
+                .WithMany(u => u.LeaveRequests)
+                .HasForeignKey(r => r.ApplicationUserId)
+                .IsRequired();
+
             builder.Entity<ApplicationUser>()
                 .HasOne(u => u.WorkSchedule)
                 .WithMany()
@@ -45,6 +51,12 @@ namespace MiSistemaAsistencia.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(u => u.PositionId)
                 .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ApplicationUser>()
+                .HasOne(empleado => empleado.Supervisor)
+                .WithMany()
+                .HasForeignKey(empleado => empleado.SupervisorId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
