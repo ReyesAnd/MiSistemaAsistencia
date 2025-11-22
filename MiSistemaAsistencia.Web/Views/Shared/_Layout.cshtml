@@ -30,7 +30,7 @@
                                 <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Mi Panel</a>
                             </li>
 
-                            @if (User.IsInRole("Empleado") || User.IsInRole("Administrador"))
+                            @if (User.IsInRole("Empleado") || User.IsInRole("Supervisor"))
                             {
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="LeaveRequest" asp-action="Index">Mis Solicitudes</a>

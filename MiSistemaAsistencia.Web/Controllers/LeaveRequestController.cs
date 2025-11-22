@@ -22,7 +22,7 @@ namespace MiSistemaAsistencia.Web.Controllers
         }
 
         // GET: /LeaveRequest 
-        [Authorize(Roles = "Empleado")]
+        [Authorize(Roles = "Empleado,Supervisor")]
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
@@ -78,28 +78,65 @@ namespace MiSistemaAsistencia.Web.Controllers
         // --- ACCIONES DE SUPERVISOR / ADMIN ---
 
         // GET: /LeaveRequest/Pending
+
+        // GET: /LeaveRequest/Pending
         [Authorize(Roles = "Supervisor, Administrador")]
         public async Task<IActionResult> Pending()
         {
-            var pendingRequests = await _context.LeaveRequests
+            var currentUserId = _userManager.GetUserId(User);
+
+            var pendingRequestsQuery = _context.LeaveRequests
+                .Include(r => r.RequestUser)
                 .Where(r => r.Status == LeaveStatus.Pending)
-                .Join(_context.Users,
-                    request => request.ApplicationUserId, 
-                    user => user.Id,                     
-                    (request, user) => new LeaveRequestViewModel 
-                    {
-                        RequestId = request.Id,
-                        ApplicantName = user.FirstName + " " + user.LastName,
-                        RequestDate = request.RequestDate,
-                        StartDate = request.StartDate,
-                        EndDate = request.EndDate,
-                        Type = request.Type,
-                        Status = request.Status
-                    })
+                .AsQueryable();
+
+            if (User.IsInRole("Supervisor") || User.IsInRole("Administrador"))
+            {
+                pendingRequestsQuery = pendingRequestsQuery
+                    .Where(r => r.RequestUser.SupervisorId == currentUserId);
+            }
+
+            var pendingRequests = await pendingRequestsQuery
+                .Select(request => new LeaveRequestViewModel
+                {
+                    RequestId = request.Id,
+                    ApplicantName = EF.Property<string>(request.RequestUser, "FirstName") + " " +
+                                    EF.Property<string>(request.RequestUser, "LastName"),
+
+                    RequestDate = request.RequestDate,
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    Type = request.Type,
+                    Status = request.Status
+                })
+                .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
 
             return View(pendingRequests);
         }
+
+        //[Authorize(Roles = "Supervisor, Administrador")]
+        //public async Task<IActionResult> Pending()
+        //{
+        //    var pendingRequests = await _context.LeaveRequests
+        //        .Where(r => r.Status == LeaveStatus.Pending)
+        //        .Join(_context.Users,
+        //            request => request.ApplicationUserId, 
+        //            user => user.Id,                     
+        //            (request, user) => new LeaveRequestViewModel 
+        //            {
+        //                RequestId = request.Id,
+        //                ApplicantName = user.FirstName + " " + user.LastName,
+        //                RequestDate = request.RequestDate,
+        //                StartDate = request.StartDate,
+        //                EndDate = request.EndDate,
+        //                Type = request.Type,
+        //                Status = request.Status
+        //            })
+        //        .ToListAsync();
+
+        //    return View(pendingRequests);
+        //}
 
         // POST: /LeaveRequest/Approve/5
         [HttpPost]

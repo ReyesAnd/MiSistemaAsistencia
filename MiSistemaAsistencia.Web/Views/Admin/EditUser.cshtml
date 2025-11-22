@@ -1,6 +1,7 @@
 ﻿@model MiSistemaAsistencia.Web.Models.EditUserViewModel
 @{
     ViewData["Title"] = "Editar Empleado";
+    var userRole = ViewData["UserRole"] as string;
 }
 
 
@@ -118,6 +119,34 @@
                         </div>
                     </div>
 
+                    @if (userRole == "Empleado")
+                    {
+                        <hr />
+                        <h5 class="mb-3">Asignación de Jerarquía</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="SupervisorId" class="form-label">Asignar Supervisor</label>
+                            <select asp-for="SupervisorId" class="form-select" asp-items="@((SelectList)ViewData["SupervisorList"])">
+                                <option value="">-- Sin Supervisor Asignado --</option>
+                            </select>
+                            <span asp-validation-for="SupervisorId" class="text-danger"></span>
+                        </div>
+                    }
+                    else if (userRole == "Supervisor")
+                    {
+                        <hr />
+                        <h5 class="mb-3">Asignación de Jerarquía</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="SupervisorId" class="form-label">Asignar Administrador</label>
+                            <select asp-for="SupervisorId" class="form-select" asp-items="@((SelectList)ViewData["AdminList"])">
+                                <option value="">-- Sin Administrador Asignado --</option>
+                            </select>
+                            <small class="form-text text-muted">Este es el administrador que aprobará sus solicitudes.</small>
+                            <span asp-validation-for="SupervisorId" class="text-danger"></span>
+                        </div>
+                    }
+                  
                     <button type="submit" class="w-100 btn btn-lg btn-primary mt-3">Guardar Cambios</button>
                     <a asp-action="UserManagement" class="btn btn-link w-100 mt-2 text-muted">Cancelar</a>
                 </form>

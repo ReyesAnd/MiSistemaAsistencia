@@ -37,21 +37,35 @@ namespace MiSistemaAsistencia.Web.Controllers
         // --- Gestión de Usuarios ---
 
         // GET: /Admin/UserManagement
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UserManagement(string searchString)
         {
-            var users = _context.Users
+            var users = await _context.Users
+                            //.Include(u => u.SupervisorId)
                             .Include(u => u.Position)
-                            .AsQueryable();
+                            .ToListAsync();
 
-            if (!String.IsNullOrEmpty(searchString))
+            var userViewModels = new List<UserRoleViewModel>();
+
+            foreach (var user in users)
             {
-                users = users.Where(u => u.FirstName.Contains(searchString) ||
-                                         u.LastName.Contains(searchString) ||
-                                         u.Email.Contains(searchString) ||
-                                         u.EmployeeNumber.Contains(searchString));
+                var roles = await _userManager.GetRolesAsync(user);
+
+                userViewModels.Add(new UserRoleViewModel
+                {
+                    UserId = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    EmployeeNumber = user.EmployeeNumber,
+                    PositionName = user.Position?.Name,
+                    LockoutEnd = user.LockoutEnd,
+                    //SupervisorId = user.SupervisorId,
+                    SystemRole = roles.FirstOrDefault() ?? "Sin Rol Asignado",
+                });
             }
 
-            return View(await users.ToListAsync());
+            return View(userViewModels);
         }
 
         [HttpPost]
@@ -89,6 +103,18 @@ namespace MiSistemaAsistencia.Web.Controllers
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
+
+            var supervisorRoleId = (await _roleManager.FindByNameAsync("Supervisor")).Id;
+            var adminRoleId = (await _roleManager.FindByNameAsync("Administrador")).Id;
+
+            var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
+            var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
+
+            ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email", user.SupervisorId);
+            ViewData["AdminList"] = new SelectList(adminList, "Id", "Email", user.SupervisorId);
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            ViewData["UserRole"] = userRoles.FirstOrDefault();
 
             var userRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "Empleado";
 
@@ -153,9 +179,16 @@ namespace MiSistemaAsistencia.Web.Controllers
         }
 
         // GET: /Admin/CreateUser
-        public IActionResult CreateUser()
+        public async Task<IActionResult> CreateUser()
         {
             ViewBag.Roles = _roleManager.Roles.ToList();
+
+            var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
+            var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
+
+            ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email");
+            ViewData["AdminList"] = new SelectList(adminList, "Id", "Email");
+
             return View();
         }
 
@@ -174,7 +207,8 @@ namespace MiSistemaAsistencia.Web.Controllers
                     LastName = model.LastName,
                     EmployeeNumber = model.EmployeeNumber,
                     HireDate = model.HireDate,
-                    AvailableVacationDays = 15
+                    AvailableVacationDays = 15,
+                    SupervisorId = model.SupervisorId
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -191,6 +225,12 @@ namespace MiSistemaAsistencia.Web.Controllers
                 }
             }
             ViewBag.Roles = _roleManager.Roles.ToList();
+
+            var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
+            var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
+            ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email");
+            ViewData["AdminList"] = new SelectList(adminList, "Id", "Email");
+
             return View(model);
         }
 

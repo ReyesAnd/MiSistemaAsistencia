@@ -38,5 +38,6 @@ namespace MiSistemaAsistencia.Web.Models
         [Required(ErrorMessage = "Debe seleccionar un rol.")]
         [Display(Name = "Rol")]
         public string RoleName { get; set; }
+        public string SupervisorId { get; set; }
     }
 }
