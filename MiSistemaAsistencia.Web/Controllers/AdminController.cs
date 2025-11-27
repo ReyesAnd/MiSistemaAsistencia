@@ -133,7 +133,8 @@ namespace MiSistemaAsistencia.Web.Controllers
                 PositionId = user.PositionId,
                 DepartmentId = user.DepartmentId,
                 WorkScheduleId = user.WorkScheduleId,
-                RoleName = userRole
+                RoleName = userRole,
+                SupervisorId = user.SupervisorId
             };
 
             return View(viewModel);
@@ -151,6 +152,13 @@ namespace MiSistemaAsistencia.Web.Controllers
                 ViewData["WorkScheduleId"] = new SelectList(await _context.WorkSchedules.ToListAsync(), "Id", "Name", model.WorkScheduleId);
                 ViewData["RoleName"] = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", model.RoleName);
 
+                var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
+                var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
+                ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email", model.SupervisorId);
+                ViewData["AdminList"] = new SelectList(adminList, "Id", "Email", model.SupervisorId);
+
+                ViewData["UserRole"] = model.RoleName;
+
                 return View(model);
             }
 
@@ -165,8 +173,10 @@ namespace MiSistemaAsistencia.Web.Controllers
             user.DepartmentId = model.DepartmentId;
             user.WorkScheduleId = model.WorkScheduleId;
 
+            user.SupervisorId = model.SupervisorId;
+
             var updateResult = await _userManager.UpdateAsync(user);
-            
+
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (!currentRoles.Contains(model.RoleName))
             {

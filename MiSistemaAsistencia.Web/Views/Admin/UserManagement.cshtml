@@ -47,7 +47,6 @@
                 <td>@user.EmployeeNumber</td>
                 <td>@user.PositionName</td>
                 <td>@user.SystemRole</td>
-                @* <td>@user.SupervisorId</td> *@
                 <td>
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
