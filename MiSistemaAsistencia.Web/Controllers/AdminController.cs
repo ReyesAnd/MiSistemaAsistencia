@@ -95,6 +95,38 @@ namespace MiSistemaAsistencia.Web.Controllers
             return RedirectToAction("UserManagement");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado.";
+                return RedirectToAction("UserManagement");
+            }
+
+            // Contraseña por defecto
+            string newPassword = "Tempor@l98";
+
+            // Generar token de reseteo
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToAction("UserManagement");
+            }
+
+            TempData["SuccessMessage"] =
+                $"La contraseña del usuario {user.Email} ha sido restablecida a 'Tempor@l98'";
+
+            return RedirectToAction("UserManagement");
+        }
+
         // --- [HttpGet] EditUser ---
         [HttpGet]
         public async Task<IActionResult> EditUser(string id)

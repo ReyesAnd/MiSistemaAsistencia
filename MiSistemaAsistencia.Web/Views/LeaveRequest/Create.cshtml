@@ -1,0 +1,111 @@
+﻿@using MiSistemaAsistencia.Domain
+@model MiSistemaAsistencia.Domain.LeaveRequest
+
+@{
+    ViewData["Title"] = "Nueva Solicitud";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Nueva Solicitud</h1>
+  @*   <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index">Mis Solicitudes</a></li>
+        <li class="breadcrumb-item active">Crear</li>
+    </ol> *@
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-lg mt-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="text-center font-weight-light my-2">Detalles de la Solicitud</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="form-floating mb-3">
+                            <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<LeaveType>()">
+                                <option selected="selected" value="">-- Seleccione el tipo --</option>
+                            </select>
+                            <label asp-for="Type">Tipo de Ausencia</label>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3 mb-md-0">
+                                    <input asp-for="StartDate" class="form-control" type="date" id="startDate" />
+                                    <label asp-for="StartDate">Desde</label>
+                                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="EndDate" class="form-control" type="date" id="endDate" />
+                                    <label asp-for="EndDate">Hasta</label>
+                                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info" id="daysAlert" style="display:none;">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Estás solicitando: <strong id="totalDaysCalc">0</strong> días.
+                        </div>
+
+                       @*  <div class="form-floating mb-3">
+                            <textarea asp-for="Reason" class="form-control" placeholder="Motivo" style="height: 100px"></textarea>
+                            <label asp-for="Reason">Motivo o Justificación</label>
+                            <span asp-validation-for="Reason" class="text-danger"></span>
+                        </div> *@
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-4">Enviar Solicitud</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var startInput = document.getElementById("startDate");
+            var endInput = document.getElementById("endDate");
+            var alertBox = document.getElementById("daysAlert");
+            var daysSpan = document.getElementById("totalDaysCalc");
+
+            function updateDays() {
+                var start = new Date(startInput.value);
+                var end = new Date(endInput.value);
+
+                // Verificar que ambas fechas sean válidas y fin sea mayor o igual a inicio
+                if (startInput.value && endInput.value && end >= start) {
+                    var diffTime = Math.abs(end - start);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                    daysSpan.textContent = diffDays;
+                    alertBox.style.display = "block";
+                    alertBox.className = "alert alert-info"; // Restaurar color azul
+                }
+                else if (startInput.value && endInput.value && end < start) {
+                    daysSpan.textContent = "Fecha fin inválida";
+                    alertBox.style.display = "block";
+                    alertBox.className = "alert alert-danger"; // Poner en rojo
+                }
+                else {
+                    alertBox.style.display = "none";
+                }
+            }
+
+            startInput.addEventListener("change", updateDays);
+            endInput.addEventListener("change", updateDays);
+        });
+    </script>
+}

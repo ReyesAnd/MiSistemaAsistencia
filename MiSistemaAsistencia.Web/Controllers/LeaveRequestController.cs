@@ -47,50 +47,68 @@ namespace MiSistemaAsistencia.Web.Controllers
         [Authorize(Roles = "Empleado,Supervisor")]
         public async Task<IActionResult> Create(LeaveRequest request)
         {
+            //request.ApplicationUserId = user.Id;
+            //request.RequestUser = user;
+
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                // Asignamos los valores por defecto
-                request.ApplicationUserId = user.Id;
-                request.RequestDate = DateTime.Now;
-                request.Status = LeaveStatus.Pending; // Enum 'Pending'
-
-                // Lógica de validación (ej. verificar días disponibles)
-                if (request.Type == LeaveType.Vacation)
+                if (request.EndDate < request.StartDate)
                 {
-                    int requestedDays = (request.EndDate - request.StartDate).Days + 1;
+                    ModelState.AddModelError("EndDate", "La fecha de fin no puede ser anterior a la de inicio.");
+                    return View(request);
+                }
+
+                if (request.StartDate.Date < DateTime.Today)
+                {
+                    ModelState.AddModelError("StartDate", "No puedes realizar solicitudes para fechas pasadas.");
+                    return View(request);
+                }
+
+                int requestedDays = (request.EndDate - request.StartDate).Days + 1;
+
+                if (request.Type == LeaveType.Vacaciones)
+                {
                     if (requestedDays > user.AvailableVacationDays)
                     {
-                        ModelState.AddModelError(string.Empty, "No tienes suficientes días de vacaciones disponibles.");
+                        ModelState.AddModelError(string.Empty, $"No tienes suficientes días. Solicitaste {requestedDays}, pero solo tienes {user.AvailableVacationDays} disponibles.");
                         return View(request);
                     }
                 }
 
+                request.ApplicationUserId = user.Id;
+                request.RequestDate = DateTime.Now;
+                request.Status = LeaveStatus.Pending;
+
                 _context.Add(request);
                 await _context.SaveChangesAsync();
+
                 TempData["SuccessMessage"] = "Solicitud enviada exitosamente.";
                 return RedirectToAction("Index");
             }
+
             return View(request);
         }
 
         // --- ACCIONES DE SUPERVISOR / ADMIN ---
 
         // GET: /LeaveRequest/Pending
-
-        // GET: /LeaveRequest/Pending
         [Authorize(Roles = "Supervisor, Administrador")]
         public async Task<IActionResult> Pending()
         {
             var currentUserId = _userManager.GetUserId(User);
+            var isAdministrator = User.IsInRole("Administrador");
 
             var pendingRequestsQuery = _context.LeaveRequests
                 .Include(r => r.RequestUser)
                 .Where(r => r.Status == LeaveStatus.Pending)
                 .AsQueryable();
 
-            if (User.IsInRole("Supervisor") || User.IsInRole("Administrador"))
+            if (isAdministrator)
+            {
+            }
+            else if (User.IsInRole("Supervisor"))
             {
                 pendingRequestsQuery = pendingRequestsQuery
                     .Where(r => r.RequestUser.SupervisorId == currentUserId);
@@ -115,29 +133,6 @@ namespace MiSistemaAsistencia.Web.Controllers
             return View(pendingRequests);
         }
 
-        //[Authorize(Roles = "Supervisor, Administrador")]
-        //public async Task<IActionResult> Pending()
-        //{
-        //    var pendingRequests = await _context.LeaveRequests
-        //        .Where(r => r.Status == LeaveStatus.Pending)
-        //        .Join(_context.Users,
-        //            request => request.ApplicationUserId, 
-        //            user => user.Id,                     
-        //            (request, user) => new LeaveRequestViewModel 
-        //            {
-        //                RequestId = request.Id,
-        //                ApplicantName = user.FirstName + " " + user.LastName,
-        //                RequestDate = request.RequestDate,
-        //                StartDate = request.StartDate,
-        //                EndDate = request.EndDate,
-        //                Type = request.Type,
-        //                Status = request.Status
-        //            })
-        //        .ToListAsync();
-
-        //    return View(pendingRequests);
-        //}
-
         // POST: /LeaveRequest/Approve/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -153,8 +148,7 @@ namespace MiSistemaAsistencia.Web.Controllers
             request.Status = LeaveStatus.Approved;
             request.ApprovedByUserId = _userManager.GetUserId(User);
 
-            // Lógica de negocio: Descontar días de vacaciones
-            if (request.Type == LeaveType.Vacation)
+            if (request.Type == LeaveType.Vacaciones)
             {
                 int requestedDays = (request.EndDate - request.StartDate).Days + 1;
                 user.AvailableVacationDays -= requestedDays;

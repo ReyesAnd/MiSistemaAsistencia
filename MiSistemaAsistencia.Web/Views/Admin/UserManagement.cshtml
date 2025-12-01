@@ -62,6 +62,12 @@
                     <a asp-action="EditUser" asp-route-id="@user.UserId"
                        class="btn btn-sm btn-outline-secondary">Editar</a>
 
+                    <form asp-action="ResetPassword" asp-route-id="@user.UserId" method="post"
+                          onsubmit="return confirm('¿Seguro que quieres reiniciar la contraseña de este usuario?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-warning">Reiniciar Contraseña</button>
+                    </form>
+
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
                         <form asp-action="ActivateUser" asp-route-id="@user.UserId" method="post">

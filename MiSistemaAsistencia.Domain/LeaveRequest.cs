@@ -10,7 +10,7 @@ namespace MiSistemaAsistencia.Domain
     public class LeaveRequest
     {
         public int Id { get; set; }
-        public string ApplicationUserId { get; set; }
+        public string? ApplicationUserId { get; set; }
         public DateTime RequestDate { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -19,9 +19,9 @@ namespace MiSistemaAsistencia.Domain
 
         public string? ApprovedByUserId { get; set; } // Supervisor/Admin
         public string? RejectionReason { get; set; }
-        public virtual IHierarchicalUser RequestUser { get; set; }
+        public virtual IHierarchicalUser? RequestUser { get; set; }
     }
 
-    public enum LeaveType { Vacation, SickDay, Permission }
+    public enum LeaveType { Vacaciones, Permisos }
     public enum LeaveStatus { Pending, Approved, Rejected }
 }
