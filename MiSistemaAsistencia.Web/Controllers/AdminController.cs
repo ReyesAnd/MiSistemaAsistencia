@@ -95,6 +95,38 @@ namespace MiSistemaAsistencia.Web.Controllers
             return RedirectToAction("UserManagement");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Usuario no encontrado.";
+                return RedirectToAction("UserManagement");
+            }
+
+            // Contraseña por defecto
+            string newPassword = "Tempor@l98";
+
+            // Generar token de reseteo
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = string.Join("; ", result.Errors.Select(e => e.Description));
+                return RedirectToAction("UserManagement");
+            }
+
+            TempData["SuccessMessage"] =
+                $"La contraseña del usuario {user.Email} ha sido restablecida a 'Tempor@l98'";
+
+            return RedirectToAction("UserManagement");
+        }
+
         // --- [HttpGet] EditUser ---
         [HttpGet]
         public async Task<IActionResult> EditUser(string id)
@@ -133,7 +165,8 @@ namespace MiSistemaAsistencia.Web.Controllers
                 PositionId = user.PositionId,
                 DepartmentId = user.DepartmentId,
                 WorkScheduleId = user.WorkScheduleId,
-                RoleName = userRole
+                RoleName = userRole,
+                SupervisorId = user.SupervisorId
             };
 
             return View(viewModel);
@@ -151,6 +184,13 @@ namespace MiSistemaAsistencia.Web.Controllers
                 ViewData["WorkScheduleId"] = new SelectList(await _context.WorkSchedules.ToListAsync(), "Id", "Name", model.WorkScheduleId);
                 ViewData["RoleName"] = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", model.RoleName);
 
+                var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
+                var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
+                ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email", model.SupervisorId);
+                ViewData["AdminList"] = new SelectList(adminList, "Id", "Email", model.SupervisorId);
+
+                ViewData["UserRole"] = model.RoleName;
+
                 return View(model);
             }
 
@@ -165,8 +205,10 @@ namespace MiSistemaAsistencia.Web.Controllers
             user.DepartmentId = model.DepartmentId;
             user.WorkScheduleId = model.WorkScheduleId;
 
+            user.SupervisorId = model.SupervisorId;
+
             var updateResult = await _userManager.UpdateAsync(user);
-            
+
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (!currentRoles.Contains(model.RoleName))
             {

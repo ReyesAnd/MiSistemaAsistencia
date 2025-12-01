@@ -3,19 +3,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiSistemaAsistencia.Infrastructure.Data;
 using MiSistemaAsistencia.Infrastructure.Reporting;
+using MiSistemaAsistencia.Web.ViewModels;
 using OfficeOpenXml; 
 using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using System.IO;
-using MiSistemaAsistencia.Web.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace MiSistemaAsistencia.Web.Controllers
 {
-    [Authorize(Roles = "Supervisor, Administrador")]
+    [Authorize(Roles = "Administrador")]
     public class ReportController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -30,7 +31,7 @@ namespace MiSistemaAsistencia.Web.Controllers
         // GET: /Report
         public IActionResult Index()
         {
-            return View(new ReportViewModel { StartDate = DateTime.Today, EndDate = DateTime.Today });
+            return View(new ReportViewModel { StartDate = DateTime.Today, EndDate = DateTime.Today, ReportType = "Asistencia" });
         }
 
         // POST: /Report/Search
@@ -38,12 +39,212 @@ namespace MiSistemaAsistencia.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(ReportViewModel model)
         {
-            model.Results = new List<ReportItem>();
+            model.Results = await GetReportData(model);
+            return View(model);
+        }
 
+        // GET: /Report/ExportToExcel (Cambiado a GET para facilitar el link)
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(string reportType, DateTime startDate, DateTime endDate)
+        {
+            // 1. Obtener datos reutilizando la lógica
+            var model = new ReportViewModel { ReportType = reportType, StartDate = startDate, EndDate = endDate };
+            var data = await GetReportData(model);
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Reporte");
+
+                // 2. Cabeceras Fijas
+                worksheet.Cells[1, 1].Value = "Fecha";
+                worksheet.Cells[1, 2].Value = "Empleado";
+                worksheet.Cells[1, 3].Value = "Num. Empleado";
+                worksheet.Cells[1, 4].Value = "Departamento";
+
+                int colIndex = 5;
+
+                // 3. Cabeceras Dinámicas
+                if (reportType == "Tardanzas")
+                {
+                    worksheet.Cells[1, colIndex++].Value = "Hora Entrada";
+                    worksheet.Cells[1, colIndex++].Value = "Hora Esperada";
+                    worksheet.Cells[1, colIndex++].Value = "Diferencia";
+                }
+                else if (reportType == "Ausentes")
+                {
+                    worksheet.Cells[1, colIndex++].Value = "Estado";
+                    worksheet.Cells[1, colIndex++].Value = "Observación";
+                }
+                else // Asistencia Normal
+                {
+                    worksheet.Cells[1, colIndex++].Value = "Hora Entrada";
+                    worksheet.Cells[1, colIndex++].Value = "Hora Salida";
+                    worksheet.Cells[1, colIndex++].Value = "Horas Totales";
+                }
+
+                // Estilo de Cabecera
+                worksheet.Cells[1, 1, 1, colIndex - 1].Style.Font.Bold = true;
+
+                // 4. Llenar Datos
+                int row = 2;
+                foreach (var item in data)
+                {
+                    worksheet.Cells[row, 1].Value = item.Date.ToString("dd/MM/yyyy");
+                    worksheet.Cells[row, 2].Value = item.EmployeeName;
+                    worksheet.Cells[row, 3].Value = item.EmployeeNumber;
+                    worksheet.Cells[row, 4].Value = item.Department;
+
+                    int dynamicCol = 5;
+
+                    if (reportType == "Tardanzas")
+                    {
+                        worksheet.Cells[row, dynamicCol++].Value = item.CheckIn?.ToString("hh\\:mm tt");
+                        worksheet.Cells[row, dynamicCol++].Value = DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt");
+                        var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
+                        worksheet.Cells[row, dynamicCol++].Value = delay?.ToString(@"hh\:mm");
+                    }
+                    else if (reportType == "Ausentes")
+                    {
+                        worksheet.Cells[row, dynamicCol++].Value = item.Status;
+                        worksheet.Cells[row, dynamicCol++].Value = item.Comments;
+                    }
+                    else
+                    {
+                        worksheet.Cells[row, dynamicCol++].Value = item.CheckIn?.ToString("hh\\:mm tt");
+                        worksheet.Cells[row, dynamicCol++].Value = item.CheckOut.HasValue ? item.CheckOut.Value.ToString("hh\\:mm tt") : "N/A";
+                        worksheet.Cells[row, dynamicCol++].Value = (item.CheckOut.HasValue && item.CheckIn.HasValue)
+                            ? Math.Round((item.CheckOut.Value - item.CheckIn.Value).TotalHours, 2) : 0;
+                    }
+                    row++;
+                }
+
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                await package.SaveAsAsync(stream);
+                stream.Position = 0;
+                string fileName = $"Reporte_{reportType}_{startDate:yyyyMMdd}.xlsx";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+        }
+
+        // GET: /Report/ExportToPdf
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf(string reportType, DateTime startDate, DateTime endDate)
+        {
+            var model = new ReportViewModel { ReportType = reportType, StartDate = startDate, EndDate = endDate };
+            var data = await GetReportData(model);
+
+            QuestPDF.Settings.License = LicenseType.Community;
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    // Encabezado
+                    page.Header().Row(row =>
+                    {
+                        row.RelativeItem().Column(col =>
+                        {
+                            col.Item().Text($"Reporte: {reportType}").FontSize(20).Bold().FontColor(Colors.Blue.Medium);
+                            col.Item().Text($"Rango: {startDate:dd/MM/yyyy} - {endDate:dd/MM/yyyy}").FontSize(12);
+                        });
+                    });
+
+                    // Tabla Dinámica
+                    page.Content().PaddingVertical(10).Table(table =>
+                    {
+                        // Definición de Columnas
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(60); // Fecha
+                            columns.RelativeColumn();   // Empleado
+                            columns.RelativeColumn();   // Dept
+
+                            if (reportType == "Tardanzas") { columns.ConstantColumn(60); columns.ConstantColumn(60); columns.ConstantColumn(50); }
+                            else if (reportType == "Ausentes") { columns.ConstantColumn(60); columns.RelativeColumn(); }
+                            else { columns.ConstantColumn(60); columns.ConstantColumn(60); columns.ConstantColumn(50); }
+                        });
+
+                        // Cabecera
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(CellStyle).Text("Fecha");
+                            header.Cell().Element(CellStyle).Text("Empleado");
+                            header.Cell().Element(CellStyle).Text("Dept");
+
+                            if (reportType == "Tardanzas")
+                            {
+                                header.Cell().Element(CellStyle).Text("Entrada");
+                                header.Cell().Element(CellStyle).Text("Esperada");
+                                header.Cell().Element(CellStyle).Text("Dif");
+                            }
+                            else if (reportType == "Ausentes")
+                            {
+                                header.Cell().Element(CellStyle).Text("Estado");
+                                header.Cell().Element(CellStyle).Text("Obs");
+                            }
+                            else
+                            {
+                                header.Cell().Element(CellStyle).Text("Entrada");
+                                header.Cell().Element(CellStyle).Text("Salida");
+                                header.Cell().Element(CellStyle).Text("Horas");
+                            }
+
+                            static IContainer CellStyle(IContainer container) =>
+                                container.Background(Colors.Grey.Lighten3).Padding(5).BorderBottom(1).BorderColor(Colors.Grey.Darken1);
+                        });
+
+                        // Datos
+                        foreach (var item in data)
+                        {
+                            table.Cell().Element(BlockStyle).Text(item.Date.ToString("dd/MM"));
+                            table.Cell().Element(BlockStyle).Text(item.EmployeeName);
+                            table.Cell().Element(BlockStyle).Text(item.Department);
+
+                            if (reportType == "Tardanzas")
+                            {
+                                table.Cell().Element(BlockStyle).Text(item.CheckIn?.ToString("hh\\:mm tt"));
+                                table.Cell().Element(BlockStyle).Text(DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"));
+                                var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
+                                table.Cell().Element(BlockStyle).Text(delay?.ToString(@"hh\:mm")).FontColor(Colors.Red.Medium);
+                            }
+                            else if (reportType == "Ausentes")
+                            {
+                                table.Cell().Element(BlockStyle).Text(item.Status).FontColor(Colors.Red.Medium);
+                                table.Cell().Element(BlockStyle).Text(item.Comments);
+                            }
+                            else
+                            {
+                                table.Cell().Element(BlockStyle).Text(item.CheckIn?.ToString("hh\\:mm tt"));
+                                table.Cell().Element(BlockStyle).Text(item.CheckOut.HasValue ? item.CheckOut.Value.ToString("hh\\:mm tt") : "--");
+                                table.Cell().Element(BlockStyle).Text((item.CheckOut.HasValue && item.CheckIn.HasValue)
+                                    ? Math.Round((item.CheckOut.Value - item.CheckIn.Value).TotalHours, 2).ToString() : "-");
+                            }
+
+                            static IContainer BlockStyle(IContainer container) =>
+                                container.BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(5);
+                        }
+                    });
+
+                    page.Footer().AlignCenter().Text(x => { x.CurrentPageNumber(); });
+                });
+            });
+
+            return File(document.GeneratePdf(), "application/pdf", $"Reporte_{reportType}_{startDate:yyyyMMdd}.pdf");
+        }
+
+        private async Task<List<ReportItem>> GetReportData(ReportViewModel model)
+        {
+            var results = new List<ReportItem>();
             var filterEnd = model.EndDate.Date.AddDays(1).AddTicks(-1);
             var filterStart = model.StartDate.Date;
 
-            // REPORTES DE ASISTENCIA, PRESENTES Y TARDANZAS
             if (model.ReportType != "Ausentes")
             {
                 var query = from r in _context.AttendanceRecords
@@ -69,7 +270,7 @@ namespace MiSistemaAsistencia.Web.Controllers
 
                 var rawResults = await query.OrderByDescending(x => x.Record.CheckInTime).ToListAsync();
 
-                model.Results = rawResults.Select(x => new ReportItem
+                results = rawResults.Select(x => new ReportItem
                 {
                     EmployeeName = x.User.FirstName + " " + x.User.LastName,
                     EmployeeNumber = x.User.EmployeeNumber,
@@ -81,9 +282,6 @@ namespace MiSistemaAsistencia.Web.Controllers
                     Status = model.ReportType == "Tardanzas" ? "Tardanza" : "Presente"
                 }).ToList();
             }
-
-            // ---------------------------------------------------------
-            // REPORTE DE AUSENCIAS
             else if (model.ReportType == "Ausentes")
             {
                 var activeUsers = await _userManager.Users
@@ -103,115 +301,24 @@ namespace MiSistemaAsistencia.Web.Controllers
                     foreach (var user in activeUsers)
                     {
                         bool attended = attendanceInRange.Any(r => r.ApplicationUserId == user.Id && r.CheckInTime.Date == day);
-
                         if (!attended)
                         {
-                            model.Results.Add(new ReportItem
+                            results.Add(new ReportItem
                             {
                                 EmployeeName = user.FirstName + " " + user.LastName,
                                 EmployeeNumber = user.EmployeeNumber,
                                 Department = user.Department?.Name ?? "N/A",
                                 Date = day,
                                 Status = "Ausente",
-                                Comments = "Sin registro de entrada"
+                                Comments = "Sin registro"
                             });
                         }
                     }
                 }
-                model.Results = model.Results.OrderBy(r => r.Date).ThenBy(r => r.EmployeeName).ToList();
+                results = results.OrderBy(r => r.Date).ThenBy(r => r.EmployeeName).ToList();
             }
 
-            return View(model);
-        }
-
-        // POST: /Report/ExportToExcel
-        [HttpPost]
-        public async Task<IActionResult> ExportToExcel(DateTime startDate, DateTime endDate)
-        {
-            var reportData = await _context.AttendanceRecords
-                .Where(a => a.CheckInTime.Date >= startDate.Date && a.CheckInTime.Date <= endDate.Date)
-                .Join(_context.Users,
-                    record => record.ApplicationUserId,
-                    user => user.Id,
-                    (record, user) => new AttendanceReportEntry
-                    {
-                        EmployeeNumber = user.EmployeeNumber,
-                        FullName = user.FirstName + " " + user.LastName,
-                        CheckInTime = record.CheckInTime,
-                        CheckOutTime = record.CheckOutTime
-                    })
-                .OrderBy(r => r.CheckInTime) 
-                .ThenBy(r => r.CheckInTime)
-                .ToListAsync();
-
-
-            using (var package = new ExcelPackage())
-            {
-                var worksheet = package.Workbook.Worksheets.Add("Reporte de Asistencia");
-
-                // --- Cabeceras ---
-                worksheet.Cells["A1"].Value = "EmpleadoId";
-                worksheet.Cells["B1"].Value = "Empleado";
-                worksheet.Cells["C1"].Value = "Fecha";
-                worksheet.Cells["D1"].Value = "Hora de Entrada";
-                worksheet.Cells["E1"].Value = "Hora de Salida";
-                worksheet.Cells["F1"].Value = "Horas Totales";
-                worksheet.Cells["A1:F1"].Style.Font.Bold = true;
-
-                // --- Llenar Datos ---
-                int row = 2;
-                foreach (var record in reportData)
-                {
-                    var totalHours = record.CheckOutTime.HasValue ?
-                        (record.CheckOutTime.Value - record.CheckInTime).TotalHours : 0;
-
-                    worksheet.Cells[row, 1].Value = record.EmployeeNumber;
-                    worksheet.Cells[row, 2].Value = record.FullName;
-                    worksheet.Cells[row, 3].Value = record.CheckInTime.ToString("dd/MM/yyyy");
-                    worksheet.Cells[row, 4].Value = record.CheckInTime.ToString("hh:mm tt");
-                    worksheet.Cells[row, 5].Value = record.CheckOutTime.HasValue ? record.CheckOutTime.Value.ToString("hh:mm tt") : "N/A";
-                    worksheet.Cells[row, 6].Value = totalHours.ToString("F2");
-                    row++;
-                }
-
-                worksheet.Cells.AutoFitColumns();
-
-                // Devolver el archivo
-                var stream = new MemoryStream();
-                await package.SaveAsAsync(stream);
-                stream.Position = 0;
-
-                string excelName = $"Reporte_Asistencia_{startDate:yyyy-MM-dd}_al_{endDate:yyyy-MM-dd}.xlsx";
-                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
-            }
-        }
-
-        // POST: /Report/ExportToPdf
-        [HttpPost]
-        public async Task<IActionResult> ExportToPdf(DateTime startDate, DateTime endDate)
-        {
-            var reportData = await _context.AttendanceRecords
-                .Where(a => a.CheckInTime.Date >= startDate.Date && a.CheckInTime.Date <= endDate.Date)
-                .Join(_context.Users,
-                    record => record.ApplicationUserId,
-                    user => user.Id,
-                    (record, user) => new AttendanceReportEntry
-                    {
-                        EmployeeNumber = user.EmployeeNumber,
-                        FullName = user.FirstName + " " + user.LastName,
-                        CheckInTime = record.CheckInTime,
-                        CheckOutTime = record.CheckOutTime
-                    })
-                .OrderBy(r => r.CheckInTime)
-                .ThenBy(r => r.CheckInTime)
-                .ToListAsync();
-
-            QuestPDF.Settings.License = LicenseType.Community;
-            var report = new AttendanceReport(reportData, startDate, endDate);
-
-            byte[] pdfBytes = report.GeneratePdf();
-
-            return File(pdfBytes, "application/pdf", $"Reporte_Asistencia_{startDate:yyyy-MM-dd}.pdf");
+            return results;
         }
     }
 }

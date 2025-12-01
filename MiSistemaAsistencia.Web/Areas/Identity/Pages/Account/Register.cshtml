@@ -95,17 +95,8 @@
                                 <option value="">Seleccione un rol...</option>
                             </select>
                             <span asp-validation-for="Input.RoleName" class="text-danger"></span>
-                        </div> 
-                        @* <div class="col-md-6 mb-3">
-                            <label asp-for="Input.RoleName" class="form-label"></label>
-                            <select asp-for="Input.RoleName" class="form-select"
-                                    asp-items="@(new SelectList(ViewBag.Roles, "Name", "Name"))"
-                                    id="roleSelector">
-                                <option value="">-- Seleccione un Rol --</option>
-                            </select>
-                            <span asp-validation-for="Input.RoleName" class="text-danger"></span>
-                        </div> *@
-
+                        </div>                                                
+                        
                         <div class="col-md-6 mb-3">
                             <label asp-for="Input.WorkScheduleId"></label>
                             <select asp-for="Input.WorkScheduleId" class="form-select" asp-items="@Model.ScheduleOptions">
@@ -115,51 +106,34 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="form-floating mb-3" id="divSupervisorSelect" style="display:none;">
-                            <select asp-for="Input.SupervisorId" class="form-select" id="supervisorSelect" disabled>
-                                <option value="">-- Sin Supervisor --</option>
+                    <div class="col-md-6 mb-3" id="divSupervisorSelect" style="display:none;">
+                        <label>Asignar Supervisor</label>
+                        <select asp-for="Input.SupervisorId" class="form-select" id="supervisorSelect" disabled>
+                            <option value="">-- Seleccione un Supervisor --</option>
+                            @if (ViewData["SupervisorList"] != null)
+                            {
                                 @foreach (var item in (SelectList)ViewData["SupervisorList"])
                                 {
                                     <option value="@item.Value">@item.Text</option>
                                 }
-                            </select>
-                            <label for="supervisorSelect">Asignar Supervisor</label>
-                        </div>
+                            }
+                        </select>
+                        <span class="text-muted small">Este usuario reportará al supervisor seleccionado.</span>
+                    </div>
 
-                        <div class="form-floating mb-3" id="divAdminSelect" style="display:none;">
-                            <select asp-for="Input.SupervisorId" class="form-select" id="adminSelect" disabled>
-                                <option value="">-- Sin Administrador --</option>
+                    <div class="col-md-6 mb-3" id="divAdminSelect" style="display:none;">
+                        <label>Asignar Aprobador (Admin)</label>
+                        <select asp-for="Input.SupervisorId" class="form-select" id="adminSelect" disabled>
+                            <option value="">-- Seleccione un Administrador --</option>
+                            @if (ViewData["AdminList"] != null)
+                            {
                                 @foreach (var item in (SelectList)ViewData["AdminList"])
                                 {
                                     <option value="@item.Value">@item.Text</option>
                                 }
-                            </select>
-                            <label for="adminSelect">Asignar Administrador</label>
-                        </div>
-                        @* <div class="mb-3" id="divSupervisorSelect" style="display:none;">
-                            <label class="form-label">Asignar Supervisor</label>
-                            <select name="SupervisorId" class="form-select" id="supervisorSelect" disabled>
-                                <option value="">-- Sin Supervisor --</option>
-                                @foreach (var item in (SelectList)ViewData["SupervisorList"])
-                                {
-                                    <option value="@item.Value">@item.Text</option>
-                                }
-                            </select>
-                            <small class="text-muted">Seleccione el supervisor de este empleado.</small>
-                        </div>
-
-                        <div class="mb-3" id="divAdminSelect" style="display:none;">
-                            <label class="form-label">Asignar Administrador (Aprobador)</label>
-                            <select name="SupervisorId" class="form-select" id="adminSelect" disabled>
-                                <option value="">-- Sin Administrador --</option>
-                                @foreach (var item in (SelectList)ViewData["AdminList"])
-                                {
-                                    <option value="@item.Value">@item.Text</option>
-                                }
-                            </select>
-                            <small class="text-muted">Seleccione el administrador que aprobará a este supervisor.</small>
-                        </div> *@
+                            }
+                        </select>
+                        <span class="text-muted small">Este administrador aprobará las solicitudes de este supervisor.</span>
                     </div>
 
                     <hr />
@@ -198,6 +172,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             var roleSelector = document.getElementById("roleSelector");
+
             var divSupervisor = document.getElementById("divSupervisorSelect");
             var divAdmin = document.getElementById("divAdminSelect");
 
@@ -205,16 +180,14 @@
             var selectAdmin = document.getElementById("adminSelect");
 
             function toggleHierarchies() {
-                var selectedRole = roleSelector.value;
+                var selectedRole = roleSelector.value ? roleSelector.value.trim() : "";
                 console.log("Valor del Rol Seleccionado (DB):", selectedRole);
 
-                // 1. Ocultar y deshabilitar todos
                 divSupervisor.style.display = "none";
                 divAdmin.style.display = "none";
                 selectSupervisor.disabled = true;
                 selectAdmin.disabled = true;
 
-                // 2. Mostrar y habilitar el correcto
                 if (selectedRole === "Empleado") {
                     divSupervisor.style.display = "block";
                     selectSupervisor.disabled = false;
@@ -225,45 +198,10 @@
                 }
             }
 
-            // Escuchar cambios y ejecutar al cargar
             if (roleSelector) {
                 roleSelector.addEventListener("change", toggleHierarchies);
                 toggleHierarchies();
             }
         });
     </script>
-
-    @* <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var roleSelector = document.getElementById("roleSelector");
-            var divSupervisor = document.getElementById("divSupervisorSelect");
-            var divAdmin = document.getElementById("divAdminSelect");
-            
-            var selectSupervisor = document.getElementById("supervisorSelect");
-            var selectAdmin = document.getElementById("adminSelect");
-
-            function toggleHierarchies() {
-                var selectedRole = roleSelector.value;
-
-                divSupervisor.style.display = "none";
-                divAdmin.style.display = "none";
-
-                selectSupervisor.disabled = true;
-                selectAdmin.disabled = true;
-
-                if (selectedRole === "Empleado") {
-                    divSupervisor.style.display = "block";
-                    selectSupervisor.disabled = false;
-                }
-                else if (selectedRole === "Supervisor") {
-                    divAdmin.style.display = "block";
-                    selectAdmin.disabled = false;
-                }
-            }
-
-            roleSelector.addEventListener("change", toggleHierarchies);
-
-            toggleHierarchies();
-        });
-    </script> *@
 }

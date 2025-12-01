@@ -47,7 +47,6 @@
                 <td>@user.EmployeeNumber</td>
                 <td>@user.PositionName</td>
                 <td>@user.SystemRole</td>
-                @* <td>@user.SupervisorId</td> *@
                 <td>
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
@@ -62,6 +61,12 @@
                 <td class="d-flex gap-2">
                     <a asp-action="EditUser" asp-route-id="@user.UserId"
                        class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                    <form asp-action="ResetPassword" asp-route-id="@user.UserId" method="post"
+                          onsubmit="return confirm('¿Seguro que quieres reiniciar la contraseña de este usuario?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-warning">Reiniciar Contraseña</button>
+                    </form>
 
                     @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
                     {
