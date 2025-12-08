@@ -9,6 +9,7 @@
         public string PositionName { get; set; }
         public string SupervisorId { get; set; }
         public string SystemRole { get; set; }
+        public String HireDate { get; set; }
         public string EmployeeNumber { get; set; }
         public DateTimeOffset? LockoutEnd { get; set; }
     }

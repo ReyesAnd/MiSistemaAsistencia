@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiSistemaAsistencia.Application; 
+using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using MiSistemaAsistencia.Web.Models;
-using MiSistemaAsistencia.Domain;
 
 namespace MiSistemaAsistencia.Web.Controllers
 {
@@ -72,7 +73,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                     viewModel.IsCurrentlyCheckedIn = false;
                 }
 
-                DateTime today = DateTime.Today;
+                DateTime today = TimeZoneHelper.GetRDNow();
                 int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
                 DateTime startOfWeek = today.AddDays(-1 * diff).Date;
 
@@ -96,8 +97,8 @@ namespace MiSistemaAsistencia.Web.Controllers
             if (User.IsInRole("Administrador"))
             {
                 var adminViewModel = new AdminDashboardViewModel();
-                var today = DateTime.Today;
-                var now = DateTimeOffset.UtcNow;
+                var today = TimeZoneHelper.GetRDNow();
+                var now = TimeZoneHelper.GetRDNow();
 
                 var lateArrivalsQuery = from attendance in _context.AttendanceRecords
                                         join user in _context.Users on attendance.ApplicationUserId equals user.Id

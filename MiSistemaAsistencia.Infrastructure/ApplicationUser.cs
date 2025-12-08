@@ -13,6 +13,7 @@ namespace MiSistemaAsistencia.Infrastructure
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public string FullName => $"{FirstName} {LastName}";
         public string EmployeeNumber { get; set; }
         public DateTime HireDate { get; set; }
         public int PositionId { get; set; }

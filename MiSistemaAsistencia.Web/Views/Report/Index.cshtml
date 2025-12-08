@@ -1,4 +1,5 @@
-﻿@model MiSistemaAsistencia.Web.ViewModels.ReportViewModel
+﻿@using MiSistemaAsistencia.Infrastructure.Helpers
+@model MiSistemaAsistencia.Web.ViewModels.ReportViewModel
 
 @{
     ViewData["Title"] = "Centro de Reportes";
@@ -112,7 +113,7 @@
                             {
                                 <td class="text-danger fw-bold">@item.CheckIn?.ToString("hh\\:mm tt")</td>
                                 <td>
-                                    @(DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"))
+                                    @(TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"))
                                 </td>
                                 <td>
                                     @{

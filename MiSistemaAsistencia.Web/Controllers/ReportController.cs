@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 
 namespace MiSistemaAsistencia.Web.Controllers
 {
@@ -28,10 +29,30 @@ namespace MiSistemaAsistencia.Web.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Report
-        public IActionResult Index()
+        //// GET: /Report
+        //public IActionResult Index()
+        //{
+        //    return View(new ReportViewModel { StartDate = DateTime.UtcNow.Date, EndDate = DateTime.UtcNow.Date, ReportType = "Asistencia" });
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> Index(string reportType, DateTime? date)
         {
-            return View(new ReportViewModel { StartDate = DateTime.Today, EndDate = DateTime.Today, ReportType = "Asistencia" });
+            var targetDate = date ?? TimeZoneHelper.GetRDNow();
+
+            var model = new ReportViewModel
+            {
+                StartDate = targetDate,
+                EndDate = targetDate,
+                ReportType = reportType ?? "Asistencia"
+            };
+
+            if (!string.IsNullOrEmpty(reportType))
+            {
+                model.Results = await GetReportData(model);
+            }
+
+            return View(model);
         }
 
         // POST: /Report/Search
@@ -99,7 +120,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                     if (reportType == "Tardanzas")
                     {
                         worksheet.Cells[row, dynamicCol++].Value = item.CheckIn?.ToString("hh\\:mm tt");
-                        worksheet.Cells[row, dynamicCol++].Value = DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt");
+                        worksheet.Cells[row, dynamicCol++].Value = TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt");
                         var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
                         worksheet.Cells[row, dynamicCol++].Value = delay?.ToString(@"hh\:mm");
                     }
@@ -210,7 +231,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                             if (reportType == "Tardanzas")
                             {
                                 table.Cell().Element(BlockStyle).Text(item.CheckIn?.ToString("hh\\:mm tt"));
-                                table.Cell().Element(BlockStyle).Text(DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"));
+                                table.Cell().Element(BlockStyle).Text(TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"));
                                 var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
                                 table.Cell().Element(BlockStyle).Text(delay?.ToString(@"hh\:mm")).FontColor(Colors.Red.Medium);
                             }
@@ -286,7 +307,7 @@ namespace MiSistemaAsistencia.Web.Controllers
             {
                 var activeUsers = await _userManager.Users
                     .Include(u => u.Department)
-                    .Where(u => u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow)
+                    .Where(u => u.LockoutEnd == null || u.LockoutEnd <= TimeZoneHelper.GetRDNow())
                     .ToListAsync();
 
                 var attendanceInRange = await _context.AttendanceRecords

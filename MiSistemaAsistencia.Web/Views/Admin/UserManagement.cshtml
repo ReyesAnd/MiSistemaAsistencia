@@ -1,4 +1,5 @@
-﻿@model IEnumerable<MiSistemaAsistencia.Web.ViewModels.UserRoleViewModel>
+﻿@using MiSistemaAsistencia.Infrastructure.Helpers
+@model IEnumerable<MiSistemaAsistencia.Web.ViewModels.UserRoleViewModel>
 @{
     ViewData["Title"] = "Gestión de Usuarios";
     ViewData["CurrentFilter"] = Context.Request.Query["searchString"];
@@ -33,6 +34,7 @@
             <th>Email</th>
             <th>Num. Empleado</th>
             <th>Puesto</th>
+            <th>Fecha Ingreso</th>
             <th>Rol</th>
             <th>Estado</th>
             <th>Acciones</th>
@@ -46,9 +48,10 @@
                 <td>@user.Email</td>
                 <td>@user.EmployeeNumber</td>
                 <td>@user.PositionName</td>
+                <td>@user.HireDate</td>
                 <td>@user.SystemRole</td>
                 <td>
-                    @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
+                    @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > TimeZoneHelper.GetRDNow())
                     {
                         <span class="badge bg-danger">Inactivo</span>
                     }
@@ -68,7 +71,7 @@
                         <button type="submit" class="btn btn-sm btn-outline-warning">Reiniciar Contraseña</button>
                     </form>
 
-                    @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
+                    @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > TimeZoneHelper.GetRDNow())
                     {
                         <form asp-action="ActivateUser" asp-route-id="@user.UserId" method="post">
                             @Html.AntiForgeryToken()

@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using MiSistemaAsistencia.Domain;
-using MiSistemaAsistencia.Application;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using MiSistemaAsistencia.Application;
+using MiSistemaAsistencia.Domain;
+using MiSistemaAsistencia.Infrastructure.Helpers;
+using System.Linq;
 
 namespace MiSistemaAsistencia.Infrastructure.Data
 {
@@ -75,7 +76,7 @@ namespace MiSistemaAsistencia.Infrastructure.Data
                     LastName = "Admin",
                     EmailConfirmed = true,
                     EmployeeNumber = newEmployeeNumber,
-                    HireDate = DateTime.Now,
+                    HireDate = TimeZoneHelper.GetRDNow(),
                     PositionId = adminPosition.Id,
                     DepartmentId = department.Id,
                     AvailableVacationDays = 0,

@@ -2,6 +2,7 @@
 using MiSistemaAsistencia.Application;
 using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace MiSistemaAsistencia.Infrastructure
             var record = new AttendanceRecord
             {
                 ApplicationUserId = userId,
-                CheckInTime = DateTime.Now,
+                CheckInTime = TimeZoneHelper.GetRDNow(),
                 CheckOutTime = null
             };
 
@@ -51,7 +52,7 @@ namespace MiSistemaAsistencia.Infrastructure
                 return false;
             }
 
-            record.CheckOutTime = DateTime.Now;
+            record.CheckOutTime = TimeZoneHelper.GetRDNow();
 
             await _context.SaveChangesAsync();
 

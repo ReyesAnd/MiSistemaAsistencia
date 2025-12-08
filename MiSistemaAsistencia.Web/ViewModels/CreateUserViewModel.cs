@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MiSistemaAsistencia.Infrastructure.Helpers;
+using System.ComponentModel.DataAnnotations;
 
 namespace MiSistemaAsistencia.Web.ViewModels
 {
@@ -28,9 +29,10 @@ namespace MiSistemaAsistencia.Web.ViewModels
         [Display(Name = "Número de Empleado")]
         public string EmployeeNumber { get; set; }
 
+        [Required(ErrorMessage = "La Fecha de Ingreso es obligatoria.")]
         [Display(Name = "Fecha de Contratación")]
         [DataType(DataType.Date)]
-        public DateTime HireDate { get; set; } = DateTime.Today;
+        public DateTime HireDate { get; set; } //= TimeZoneHelper.GetRDNow();   Se va a habilitar en el formulario que se ingrese manualmente.
 
         [Required(ErrorMessage = "Debe seleccionar un rol")]
         [Display(Name = "Rol del Sistema")]

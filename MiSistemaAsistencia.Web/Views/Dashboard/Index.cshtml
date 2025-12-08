@@ -1,4 +1,5 @@
-﻿@model MiSistemaAsistencia.Web.Models.EmployeeDashboardViewModel
+﻿@using MiSistemaAsistencia.Infrastructure.Helpers
+@model MiSistemaAsistencia.Web.Models.EmployeeDashboardViewModel
 @{
     ViewData["Title"] = "Panel de Control";
 
@@ -140,7 +141,7 @@ else if (Model != null)
                             <h2 class="fw-bold text-success">@Model.CurrentStatus</h2>
                             @if (Model.LastCheckInTime.HasValue)
                             {
-                                if (Model.LastCheckInTime.Value.Date == DateTime.Today)
+                                if (Model.LastCheckInTime.Value.Date == TimeZoneHelper.GetRDNow())
                                 {
                                     <small>Entrada registrada hoy a las @Model.LastCheckInTime.Value.ToShortTimeString()</small>
                                 }

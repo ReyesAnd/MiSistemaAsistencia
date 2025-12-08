@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
 
@@ -6,8 +7,8 @@ namespace MiSistemaAsistencia.Web.ViewModels
 {
     public class ReportViewModel
     {
-        public DateTime StartDate { get; set; } = DateTime.Today;
-        public DateTime EndDate { get; set; } = DateTime.Today;
+        public DateTime StartDate { get; set; } = TimeZoneHelper.GetRDNow();
+        public DateTime EndDate { get; set; } = TimeZoneHelper.GetRDNow();
         public string ReportType { get; set; } // "Asistencia", "Presentes", "Ausentes", "Tardanzas"
         
         public List<ReportItem> Results { get; set; } = new List<ReportItem>();
