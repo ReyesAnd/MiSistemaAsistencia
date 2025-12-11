@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiSistemaAsistencia.Application; 
+using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using MiSistemaAsistencia.Web.Models;
-using MiSistemaAsistencia.Domain;
 
 namespace MiSistemaAsistencia.Web.Controllers
 {
@@ -23,15 +24,6 @@ namespace MiSistemaAsistencia.Web.Controllers
             _attendanceService = attendanceService;
             _userManager = userManager;
         }
-
-        //// GET: /Dashboard/Index
-        //[HttpGet]
-        //public async Task<IActionResult> Index()
-        //{
-        //    var user = await _userManager.GetUserAsync(User);
-        //    ViewBag.UserName = user.FirstName;
-        //    return View();
-        //}
 
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -51,6 +43,22 @@ namespace MiSistemaAsistencia.Web.Controllers
                     .Where(r => r.ApplicationUserId == userId)
                     .OrderByDescending(r => r.CheckInTime)
                     .FirstOrDefaultAsync();
+
+                //Pendientes
+                if (User.IsInRole("Supervisor"))
+                {
+                    var currentSupervisorId = userId;
+
+                    var pendingCount = await (
+                        from lr in _context.LeaveRequests
+                        join emp in _context.Users on lr.ApplicationUserId equals emp.Id
+                        where lr.Status == LeaveStatus.Pending &&
+                              emp.SupervisorId == currentSupervisorId
+                        select lr
+                    ).CountAsync();
+
+                    viewModel.PendingApprovalRequests = pendingCount;
+                }
 
                 if (lastRecord != null)
                 {
@@ -72,7 +80,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                     viewModel.IsCurrentlyCheckedIn = false;
                 }
 
-                DateTime today = DateTime.Today;
+                DateTime today = TimeZoneHelper.GetRDNow();
                 int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
                 DateTime startOfWeek = today.AddDays(-1 * diff).Date;
 
@@ -96,8 +104,8 @@ namespace MiSistemaAsistencia.Web.Controllers
             if (User.IsInRole("Administrador"))
             {
                 var adminViewModel = new AdminDashboardViewModel();
-                var today = DateTime.Today;
-                var now = DateTimeOffset.UtcNow;
+                var today = TimeZoneHelper.GetRDNow();
+                var now = TimeZoneHelper.GetRDNow();
 
                 var lateArrivalsQuery = from attendance in _context.AttendanceRecords
                                         join user in _context.Users on attendance.ApplicationUserId equals user.Id

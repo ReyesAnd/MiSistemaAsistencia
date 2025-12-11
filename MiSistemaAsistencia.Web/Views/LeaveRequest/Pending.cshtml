@@ -12,6 +12,7 @@
             <th>Tipo</th>
             <th>Desde</th>
             <th>Hasta</th>
+            <th>Dias</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -23,6 +24,7 @@
                 <td>@request.Type</td>
                 <td>@request.StartDate.ToShortDateString()</td>
                 <td>@request.EndDate.ToShortDateString()</td>
+                <td>@((request.EndDate - request.StartDate).Days + 1)</td>
                 <td>
                     <form asp-action="Approve" asp-route-id="@request.RequestId" method="post" style="display:inline;">
                         @Html.AntiForgeryToken()

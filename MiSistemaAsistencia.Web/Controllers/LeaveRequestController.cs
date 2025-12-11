@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using MiSistemaAsistencia.Web.ViewModels;
 
 namespace MiSistemaAsistencia.Web.Controllers
@@ -60,7 +61,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                     return View(request);
                 }
 
-                if (request.StartDate.Date < DateTime.Today)
+                if (request.StartDate.Date < TimeZoneHelper.GetRDNow().Date)
                 {
                     ModelState.AddModelError("StartDate", "No puedes realizar solicitudes para fechas pasadas.");
                     return View(request);
@@ -78,7 +79,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                 }
 
                 request.ApplicationUserId = user.Id;
-                request.RequestDate = DateTime.Now;
+                request.RequestDate = TimeZoneHelper.GetRDNow();
                 request.Status = LeaveStatus.Pending;
 
                 _context.Add(request);

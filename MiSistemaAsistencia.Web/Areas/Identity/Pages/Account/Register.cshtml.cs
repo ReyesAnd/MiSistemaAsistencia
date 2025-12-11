@@ -7,13 +7,14 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using MiSistemaAsistencia.Application;
 using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
-using MiSistemaAsistencia.Application;
 
 namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
 {
@@ -104,6 +105,11 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
             [Display(Name = "Puesto")]
             public int PositionId { get; set; }
 
+            [Required(ErrorMessage = "La Fecha de Ingreso es obligatoria.")]
+            [Display(Name = "Fecha de Contratación")]
+            [DataType(DataType.Date)]
+            public DateTime HireDate { get; set; } //= TimeZoneHelper.GetRDNow();   Se va a habilitar en el formulario que se ingrese manualmente.
+
             [Display(Name = "Supervisor/Administrador")]
             public string? SupervisorId { get; set; }
         }
@@ -122,8 +128,8 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
             var supervisorUsers = await _userManager.GetUsersInRoleAsync("Supervisor");
             var adminUsers = await _userManager.GetUsersInRoleAsync("Administrador");
 
-            ViewData["SupervisorList"] = new SelectList(supervisorUsers, "Id", "Email");
-            ViewData["AdminList"] = new SelectList(adminUsers, "Id", "Email");
+            ViewData["SupervisorList"] = new SelectList(supervisorUsers, "Id", "FullName");
+            ViewData["AdminList"] = new SelectList(adminUsers, "Id", "FullName");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -144,7 +150,7 @@ namespace MiSistemaAsistencia.Web.Areas.Identity.Pages.Account
                     DepartmentId = Input.DepartmentId,
                     WorkScheduleId = Input.WorkScheduleId,
                     PositionId = Input.PositionId,
-                    HireDate = DateTime.Today, 
+                    HireDate = Input.HireDate, //TimeZoneHelper.GetRDNow(),  Se cambio para ponerlo manual.
                     AvailableVacationDays = 0, 
                     EmailConfirmed = true,
                     SupervisorId = Input.SupervisorId

@@ -104,6 +104,12 @@
                             </select>
                             <span asp-validation-for="Input.WorkScheduleId" class="text-danger"></span>
                         </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.HireDate">Fecha de Contratación</label>
+                            <input asp-for="Input.HireDate" type="date" class="form-control" />
+                            <span asp-validation-for="Input.HireDate" class="text-danger"></span>
+                        </div>
                     </div>
 
                     <div class="col-md-6 mb-3" id="divSupervisorSelect" style="display:none;">

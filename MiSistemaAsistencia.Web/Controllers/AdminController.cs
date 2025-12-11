@@ -60,6 +60,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                     EmployeeNumber = user.EmployeeNumber,
                     PositionName = user.Position?.Name,
                     LockoutEnd = user.LockoutEnd,
+                    HireDate = Convert.ToDateTime(user.HireDate).ToString("dd/MM/yyyy"),
                     //SupervisorId = user.SupervisorId,
                     SystemRole = roles.FirstOrDefault() ?? "Sin Rol Asignado",
                 });
@@ -142,8 +143,8 @@ namespace MiSistemaAsistencia.Web.Controllers
             var supervisorList = await _userManager.GetUsersInRoleAsync("Supervisor");
             var adminList = await _userManager.GetUsersInRoleAsync("Administrador");
 
-            ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "Email", user.SupervisorId);
-            ViewData["AdminList"] = new SelectList(adminList, "Id", "Email", user.SupervisorId);
+            ViewData["SupervisorList"] = new SelectList(supervisorList, "Id", "FullName", user.SupervisorId);
+            ViewData["AdminList"] = new SelectList(adminList, "Id", "FullName", user.SupervisorId);
 
             var userRoles = await _userManager.GetRolesAsync(user);
             ViewData["UserRole"] = userRoles.FirstOrDefault();

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MiSistemaAsistencia.Domain;
 using MiSistemaAsistencia.Infrastructure.Data;
+using MiSistemaAsistencia.Infrastructure.Helpers;
 using MiSistemaAsistencia.Infrastructure.Reporting;
 using MiSistemaAsistencia.Web.ViewModels;
 using OfficeOpenXml; 
@@ -28,10 +30,25 @@ namespace MiSistemaAsistencia.Web.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Report
-        public IActionResult Index()
+        // GET: /Report/Index
+        [HttpGet]
+        public async Task<IActionResult> Index(string reportType, DateTime? date)
         {
-            return View(new ReportViewModel { StartDate = DateTime.Today, EndDate = DateTime.Today, ReportType = "Asistencia" });
+            var targetDate = date ?? TimeZoneHelper.GetRDNow().Date;
+
+            var model = new ReportViewModel
+            {
+                StartDate = targetDate,
+                EndDate = targetDate,
+                ReportType = reportType ?? "Asistencia"
+            };
+
+            if (!string.IsNullOrEmpty(reportType))
+            {
+                model.Results = await GetReportData(model);
+            }
+
+            return View(model);
         }
 
         // POST: /Report/Search
@@ -47,7 +64,6 @@ namespace MiSistemaAsistencia.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string reportType, DateTime startDate, DateTime endDate)
         {
-            // 1. Obtener datos reutilizando la lógica
             var model = new ReportViewModel { ReportType = reportType, StartDate = startDate, EndDate = endDate };
             var data = await GetReportData(model);
 
@@ -75,6 +91,14 @@ namespace MiSistemaAsistencia.Web.Controllers
                     worksheet.Cells[1, colIndex++].Value = "Estado";
                     worksheet.Cells[1, colIndex++].Value = "Observación";
                 }
+                else if (reportType == "HistorialSolicitudes")
+                {
+                    worksheet.Cells[1, colIndex++].Value = "Tipo";
+                    worksheet.Cells[1, colIndex++].Value = "Desde";
+                    worksheet.Cells[1, colIndex++].Value = "Hasta";
+                    worksheet.Cells[1, colIndex++].Value = "Estado";
+                    worksheet.Cells[1, colIndex++].Value = "Comentarios";
+                }
                 else // Asistencia Normal
                 {
                     worksheet.Cells[1, colIndex++].Value = "Hora Entrada";
@@ -99,12 +123,20 @@ namespace MiSistemaAsistencia.Web.Controllers
                     if (reportType == "Tardanzas")
                     {
                         worksheet.Cells[row, dynamicCol++].Value = item.CheckIn?.ToString("hh\\:mm tt");
-                        worksheet.Cells[row, dynamicCol++].Value = DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt");
+                        worksheet.Cells[row, dynamicCol++].Value = TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt");
                         var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
                         worksheet.Cells[row, dynamicCol++].Value = delay?.ToString(@"hh\:mm");
                     }
                     else if (reportType == "Ausentes")
                     {
+                        worksheet.Cells[row, dynamicCol++].Value = item.Status;
+                        worksheet.Cells[row, dynamicCol++].Value = item.Comments;
+                    }
+                    else if (reportType == "HistorialSolicitudes")
+                    {
+                        worksheet.Cells[row, dynamicCol++].Value = item.LeaveType;
+                        worksheet.Cells[row, dynamicCol++].Value = item.LeaveStartDate.ToString("dd/MM/yyyy");
+                        worksheet.Cells[row, dynamicCol++].Value = item.LeaveEndDate.ToString("dd/MM/yyyy");
                         worksheet.Cells[row, dynamicCol++].Value = item.Status;
                         worksheet.Cells[row, dynamicCol++].Value = item.Comments;
                     }
@@ -141,7 +173,7 @@ namespace MiSistemaAsistencia.Web.Controllers
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4);
+                    page.Size(PageSizes.A4.Landscape());
                     page.Margin(1, Unit.Centimetre);
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(10));
@@ -162,13 +194,38 @@ namespace MiSistemaAsistencia.Web.Controllers
                         // Definición de Columnas
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.ConstantColumn(60); // Fecha
-                            columns.RelativeColumn();   // Empleado
-                            columns.RelativeColumn();   // Dept
+                            // Columnas Fijas (Fecha, Empleado, Num. Empleado, Dept)
+                            columns.ConstantColumn(70); // Fecha (dd/MM)
+                            columns.RelativeColumn(1);  // Empleado
+                            columns.ConstantColumn(60); // Num. Empleado
+                            columns.RelativeColumn(1);  // Dept
 
-                            if (reportType == "Tardanzas") { columns.ConstantColumn(60); columns.ConstantColumn(60); columns.ConstantColumn(50); }
-                            else if (reportType == "Ausentes") { columns.ConstantColumn(60); columns.RelativeColumn(); }
-                            else { columns.ConstantColumn(60); columns.ConstantColumn(60); columns.ConstantColumn(50); }
+                            // Columnas Dinámicas
+                            if (reportType == "Tardanzas")
+                            {
+                                columns.ConstantColumn(60); // Entrada
+                                columns.ConstantColumn(60); // Esperada
+                                columns.ConstantColumn(50); // Dif 
+                            }
+                            else if (reportType == "Ausentes")
+                            {
+                                columns.ConstantColumn(60); // Estado
+                                columns.RelativeColumn(1.5f); // Obs
+                            }
+                            else if (reportType == "HistorialSolicitudes")
+                            {
+                                columns.RelativeColumn(1);  // Tipo
+                                columns.ConstantColumn(70); // Desde
+                                columns.ConstantColumn(70); // Hasta
+                                columns.ConstantColumn(60); // Estado
+                                columns.RelativeColumn(1.5f); // Comentarios
+                            }
+                            else // Asistencia Normal
+                            {
+                                columns.ConstantColumn(60); // Entrada
+                                columns.ConstantColumn(60); // Salida
+                                columns.ConstantColumn(50); // Horas
+                            }
                         });
 
                         // Cabecera
@@ -176,6 +233,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                         {
                             header.Cell().Element(CellStyle).Text("Fecha");
                             header.Cell().Element(CellStyle).Text("Empleado");
+                            header.Cell().Element(CellStyle).Text("Num. Emp.");
                             header.Cell().Element(CellStyle).Text("Dept");
 
                             if (reportType == "Tardanzas")
@@ -189,7 +247,15 @@ namespace MiSistemaAsistencia.Web.Controllers
                                 header.Cell().Element(CellStyle).Text("Estado");
                                 header.Cell().Element(CellStyle).Text("Obs");
                             }
-                            else
+                            else if (reportType == "HistorialSolicitudes")
+                            {
+                                header.Cell().Element(CellStyle).Text("Tipo");
+                                header.Cell().Element(CellStyle).Text("Desde");
+                                header.Cell().Element(CellStyle).Text("Hasta");
+                                header.Cell().Element(CellStyle).Text("Estado");
+                                header.Cell().Element(CellStyle).Text("Comentarios");
+                            }
+                            else // Asistencia Normal
                             {
                                 header.Cell().Element(CellStyle).Text("Entrada");
                                 header.Cell().Element(CellStyle).Text("Salida");
@@ -203,14 +269,15 @@ namespace MiSistemaAsistencia.Web.Controllers
                         // Datos
                         foreach (var item in data)
                         {
-                            table.Cell().Element(BlockStyle).Text(item.Date.ToString("dd/MM"));
+                            table.Cell().Element(BlockStyle).Text(item.Date.ToString("dd/MM/yyyy"));
                             table.Cell().Element(BlockStyle).Text(item.EmployeeName);
+                            table.Cell().Element(BlockStyle).Text(item.EmployeeNumber);
                             table.Cell().Element(BlockStyle).Text(item.Department);
 
                             if (reportType == "Tardanzas")
                             {
                                 table.Cell().Element(BlockStyle).Text(item.CheckIn?.ToString("hh\\:mm tt"));
-                                table.Cell().Element(BlockStyle).Text(DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"));
+                                table.Cell().Element(BlockStyle).Text(TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"));
                                 var delay = item.CheckIn?.TimeOfDay - item.ExpectedTime;
                                 table.Cell().Element(BlockStyle).Text(delay?.ToString(@"hh\:mm")).FontColor(Colors.Red.Medium);
                             }
@@ -219,7 +286,15 @@ namespace MiSistemaAsistencia.Web.Controllers
                                 table.Cell().Element(BlockStyle).Text(item.Status).FontColor(Colors.Red.Medium);
                                 table.Cell().Element(BlockStyle).Text(item.Comments);
                             }
-                            else
+                            else if (reportType == "HistorialSolicitudes")
+                            {
+                                table.Cell().Element(BlockStyle).Text(item.LeaveType);
+                                table.Cell().Element(BlockStyle).Text(item.LeaveStartDate.ToString("dd/MM/yyyy"));
+                                table.Cell().Element(BlockStyle).Text(item.LeaveEndDate.ToString("dd/MM/yyyy"));
+                                table.Cell().Element(BlockStyle).Text(item.Status);
+                                table.Cell().Element(BlockStyle).Text(item.Comments);
+                            }
+                            else // Asistencia Normal
                             {
                                 table.Cell().Element(BlockStyle).Text(item.CheckIn?.ToString("hh\\:mm tt"));
                                 table.Cell().Element(BlockStyle).Text(item.CheckOut.HasValue ? item.CheckOut.Value.ToString("hh\\:mm tt") : "--");
@@ -245,7 +320,8 @@ namespace MiSistemaAsistencia.Web.Controllers
             var filterEnd = model.EndDate.Date.AddDays(1).AddTicks(-1);
             var filterStart = model.StartDate.Date;
 
-            if (model.ReportType != "Ausentes")
+            // --- BLOQUE PARA ASISTENCIA NORMAL Y TARDANZAS ---
+            if (model.ReportType == "Asistencia" || model.ReportType == "Tardanzas" || model.ReportType == "Presentes")
             {
                 var query = from r in _context.AttendanceRecords
                             join u in _context.Users on r.ApplicationUserId equals u.Id
@@ -282,12 +358,13 @@ namespace MiSistemaAsistencia.Web.Controllers
                     Status = model.ReportType == "Tardanzas" ? "Tardanza" : "Presente"
                 }).ToList();
             }
+            // --- BLOQUE PARA AUSENTES ---
             else if (model.ReportType == "Ausentes")
             {
                 var activeUsers = await _userManager.Users
-                    .Include(u => u.Department)
-                    .Where(u => u.LockoutEnd == null || u.LockoutEnd <= DateTimeOffset.UtcNow)
-                    .ToListAsync();
+                     .Include(u => u.Department)
+                     .Where(u => u.LockoutEnd == null || u.LockoutEnd <= TimeZoneHelper.GetRDNow())
+                     .ToListAsync();
 
                 var attendanceInRange = await _context.AttendanceRecords
                     .Where(r => r.CheckInTime >= filterStart && r.CheckInTime <= filterEnd)
@@ -316,6 +393,41 @@ namespace MiSistemaAsistencia.Web.Controllers
                     }
                 }
                 results = results.OrderBy(r => r.Date).ThenBy(r => r.EmployeeName).ToList();
+            }
+            // --- BLOQUE PARA SOLICITUDES ---
+            else if (model.ReportType == "HistorialSolicitudes")
+            {
+                var query = from lr in _context.LeaveRequests
+                            join u in _context.Users on lr.ApplicationUserId equals u.Id
+                            join d in _context.Departments on u.DepartmentId equals d.Id into departments
+                            from dept in departments.DefaultIfEmpty()
+                            where lr.RequestDate >= filterStart && lr.RequestDate <= filterEnd
+                            select new
+                            {
+                                Request = lr,
+                                User = u,
+                                Department = dept
+                            };
+
+                var rawResults = await query.OrderByDescending(x => x.Request.RequestDate).ToListAsync();
+
+                results = rawResults.Select(x => new ReportItem
+                {
+                    EmployeeName = x.User.FirstName + " " + x.User.LastName,
+                    EmployeeNumber = x.User.EmployeeNumber,
+                    Department = x.Department?.Name ?? "N/A",
+
+                    Date = x.Request.RequestDate,
+                    Status = x.Request.Status.ToString(),
+
+                    LeaveStartDate = x.Request.StartDate,
+                    LeaveEndDate = x.Request.EndDate,
+                    LeaveType = x.Request.Type.ToString(),
+
+                    Comments = x.Request.Status == LeaveStatus.Rejected
+                               ? $"Rechazo: {x.Request.RejectionReason}"
+                               : string.Empty
+                }).ToList();
             }
 
             return results;

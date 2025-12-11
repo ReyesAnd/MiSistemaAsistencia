@@ -1,4 +1,5 @@
-﻿@model MiSistemaAsistencia.Web.ViewModels.ReportViewModel
+﻿@using MiSistemaAsistencia.Infrastructure.Helpers
+@model MiSistemaAsistencia.Web.ViewModels.ReportViewModel
 
 @{
     ViewData["Title"] = "Centro de Reportes";
@@ -22,6 +23,7 @@
                             <option value="Presentes">Empleados Presentes (Rango)</option>
                             <option value="Ausentes">Empleados Ausentes</option>
                             <option value="Tardanzas">Llegadas Tardías</option>
+                            <option value="HistorialSolicitudes">Historial de Solicitudes</option>
                         </select>
                     </div>
 
@@ -89,7 +91,14 @@
                             <th>Estado</th>
                             <th>Observación</th>
                         }
-                        else // Asistencia y Presentes
+                        else if (Model.ReportType == "HistorialSolicitudes")
+                        {
+                            <th>Tipo</th>
+                            <th>Desde - Hasta</th>
+                            <th>Estado</th>
+                            <th>Detalles</th>
+                        }
+                        else // Asistencia normal
                         {
                             <th>Hora Entrada</th>
                             <th>Hora Salida</th>
@@ -112,7 +121,7 @@
                             {
                                 <td class="text-danger fw-bold">@item.CheckIn?.ToString("hh\\:mm tt")</td>
                                 <td>
-                                    @(DateTime.Today.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"))
+                                    @(TimeZoneHelper.GetRDNow().Date.Add(item.ExpectedTime ?? TimeSpan.Zero).ToString("hh\\:mm tt"))
                                 </td>
                                 <td>
                                     @{
@@ -124,6 +133,30 @@
                             else if (Model.ReportType == "Ausentes")
                             {
                                 <td><span class="badge bg-danger">AUSENTE</span></td>
+                                <td>@item.Comments</td>
+                            }
+                            else if (Model.ReportType == "HistorialSolicitudes")
+                            {
+                                <td><span class="badge bg-primary">@item.LeaveType</span></td>
+                                <td>
+                                    @item.LeaveStartDate.ToString("dd/MM") - @item.LeaveEndDate.ToString("dd/MM")
+                                </td>
+                                <td>
+                                    @if (item.Status == "Approved")
+                                    {
+                                        <span class="badge bg-success">Aprobado</span>
+                                    }
+                                    else if (item.Status == "Rejected")
+                                    {
+
+                                        <span class="badge bg-danger">Rechazado</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    }
+                                </td>
                                 <td>@item.Comments</td>
                             }
                             else // Asistencia Normal y Presentes
