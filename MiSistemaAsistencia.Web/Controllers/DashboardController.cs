@@ -25,15 +25,6 @@ namespace MiSistemaAsistencia.Web.Controllers
             _userManager = userManager;
         }
 
-        //// GET: /Dashboard/Index
-        //[HttpGet]
-        //public async Task<IActionResult> Index()
-        //{
-        //    var user = await _userManager.GetUserAsync(User);
-        //    ViewBag.UserName = user.FirstName;
-        //    return View();
-        //}
-
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -52,6 +43,22 @@ namespace MiSistemaAsistencia.Web.Controllers
                     .Where(r => r.ApplicationUserId == userId)
                     .OrderByDescending(r => r.CheckInTime)
                     .FirstOrDefaultAsync();
+
+                //Pendientes
+                if (User.IsInRole("Supervisor"))
+                {
+                    var currentSupervisorId = userId;
+
+                    var pendingCount = await (
+                        from lr in _context.LeaveRequests
+                        join emp in _context.Users on lr.ApplicationUserId equals emp.Id
+                        where lr.Status == LeaveStatus.Pending &&
+                              emp.SupervisorId == currentSupervisorId
+                        select lr
+                    ).CountAsync();
+
+                    viewModel.PendingApprovalRequests = pendingCount;
+                }
 
                 if (lastRecord != null)
                 {

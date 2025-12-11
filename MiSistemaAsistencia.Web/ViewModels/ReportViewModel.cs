@@ -22,9 +22,15 @@ namespace MiSistemaAsistencia.Web.ViewModels
         public DateTime Date { get; set; }
         public string Status { get; set; } // "Presente", "Ausente", "Tarde"
 
+        // Datos de Asistencia
         public DateTime? CheckIn { get; set; }
         public DateTime? CheckOut { get; set; }
         public TimeSpan? ExpectedTime { get; set; }
         public string Comments { get; set; }
+
+        //Datos de Solicitudes
+        public string LeaveType { get; set; } // "Vacaciones", "Permiso"
+        public DateTime LeaveStartDate { get; set; } 
+        public DateTime LeaveEndDate { get; set; } 
     }
 }

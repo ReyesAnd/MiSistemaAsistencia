@@ -20,6 +20,7 @@ namespace MiSistemaAsistencia.Domain
         public string? ApprovedByUserId { get; set; } // Supervisor/Admin
         public string? RejectionReason { get; set; }
         public virtual IHierarchicalUser? RequestUser { get; set; }
+        //public string? RequestComments { get; set; }
     }
 
     public enum LeaveType { Vacaciones, Permisos }

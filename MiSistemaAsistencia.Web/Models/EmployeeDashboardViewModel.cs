@@ -17,7 +17,9 @@ namespace MiSistemaAsistencia.Web.Models
 
         // Tarjeta de Solicitudes
         public int PendingLeaveRequests { get; set; }
+        //public string? SupervisorId { get; set; }
 
         public bool IsCurrentlyCheckedIn { get; set; }
+        public int PendingApprovalRequests { get; set; }
     }
 }
