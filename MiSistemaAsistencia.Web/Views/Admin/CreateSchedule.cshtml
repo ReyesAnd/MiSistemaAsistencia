@@ -15,19 +15,19 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                     <div class="mb-3">
-                        <label asp-for="Name" class="form-label"></label>
+                        <label asp-for="Name" class="form-label">Titulo</label>
                         <input asp-for="Name" class="form-control" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="ExpectedCheckIn" class="form-label"></label>
+                        <label asp-for="ExpectedCheckIn" class="form-label">Hora de entrada</label>
                         <input asp-for="ExpectedCheckIn" class="form-control" type="time" />
                         <span asp-validation-for="ExpectedCheckIn" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="ExpectedCheckOut" class="form-label"></label>
+                        <label asp-for="ExpectedCheckOut" class="form-label">Hora salida</label>
                         <input asp-for="ExpectedCheckOut" class="form-control" type="time" />
                         <span asp-validation-for="ExpectedCheckOut" class="text-danger"></span>
                     </div>

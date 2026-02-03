@@ -123,7 +123,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                 adminViewModel.LateArrivalsToday = lateCount;
 
                 // Totales
-                adminViewModel.TotalEmployees = await _userManager.Users.CountAsync(u => u.LockoutEnd == null || u.LockoutEnd <= now);
+                adminViewModel.TotalEmployees = await _userManager.Users.CountAsync(u => u.LockoutEnd == null || u.LockoutEnd <= TimeZoneHelper.GetRDNow());
 
                 // Solicitudes Pendientes
                 adminViewModel.PendingApprovalRequests = await _context.LeaveRequests
@@ -131,7 +131,7 @@ namespace MiSistemaAsistencia.Web.Controllers
 
                 // Empleados Presentes
                 adminViewModel.EmployeesPresent = await _context.AttendanceRecords
-                    .CountAsync(r => r.CheckInTime.Date == today && r.CheckOutTime == null);
+                    .CountAsync(r => r.CheckInTime.Date == TimeZoneHelper.GetRDNow().Date && r.CheckOutTime == null);
 
                 // Empleados Ausentes
                 adminViewModel.EmployeesAbsentToday = adminViewModel.TotalEmployees - adminViewModel.EmployeesPresent;
