@@ -71,20 +71,27 @@
                         <button type="submit" class="btn btn-sm btn-outline-warning">Reiniciar Contraseña</button>
                     </form>
 
-                    @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > TimeZoneHelper.GetRDNow())
+                    @if (user.EmployeeNumber != "001")
                     {
-                        <form asp-action="ActivateUser" asp-route-id="@user.UserId" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
-                        </form>
+                        @if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > TimeZoneHelper.GetRDNow())
+                        {
+                            <form asp-action="ActivateUser" asp-route-id="@user.UserId" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="DeactivateUser" asp-route-id="@user.UserId" method="post"
+                                  onsubmit="return confirm('¿Está seguro de que desea desactivar este usuario?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                            </form>
+                        }
                     }
                     else
                     {
-                        <form asp-action="DeactivateUser" asp-route-id="@user.UserId" method="post"
-                              onsubmit="return confirm('¿Está seguro de que desea desactivar este usuario?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Desactivar</button>
-                        </form>
+                        <span class="badge bg-light text-secondary border align-self-center">Protegido</span>
                     }
                 </td>
             </tr>

@@ -60,7 +60,7 @@ namespace MiSistemaAsistencia.Web.Controllers
             return View(model);
         }
 
-        // GET: /Report/ExportToExcel (Cambiado a GET para facilitar el link)
+        // GET: /Report/ExportToExcel 
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string reportType, DateTime startDate, DateTime endDate)
         {
@@ -362,23 +362,37 @@ namespace MiSistemaAsistencia.Web.Controllers
             else if (model.ReportType == "Ausentes")
             {
                 var activeUsers = await _userManager.Users
-                     .Include(u => u.Department)
-                     .Where(u => u.LockoutEnd == null || u.LockoutEnd <= TimeZoneHelper.GetRDNow())
-                     .ToListAsync();
+                    .Include(u => u.Department)
+                    .Where(u => u.LockoutEnd == null) 
+                    .ToListAsync();
 
                 var attendanceInRange = await _context.AttendanceRecords
                     .Where(r => r.CheckInTime >= filterStart && r.CheckInTime <= filterEnd)
-                    .Select(r => new { r.ApplicationUserId, r.CheckInTime })
+                    .Select(r => new { r.ApplicationUserId, r.CheckInTime, r.CheckOutTime })
                     .ToListAsync();
 
                 for (var day = filterStart; day <= model.EndDate.Date; day = day.AddDays(1))
                 {
-                    if (day.DayOfWeek == DayOfWeek.Sunday) continue;
+                    //if (day.DayOfWeek == DayOfWeek.Sunday) continue;
 
                     foreach (var user in activeUsers)
                     {
-                        bool attended = attendanceInRange.Any(r => r.ApplicationUserId == user.Id && r.CheckInTime.Date == day);
-                        if (!attended)
+                        // Filtrar registros del usuario para el día actual
+                        var userAttendanceForDay = attendanceInRange
+                            .Where(r => r.ApplicationUserId == user.Id && r.CheckInTime.Date == day)
+                            .ToList();
+
+                        string comments = string.Empty;
+                        bool isAbsent = false;
+
+                        if (!userAttendanceForDay.Any())
+                        {
+                            //No hay CheckIn.
+                            isAbsent = true;
+                            comments = "Sin registro de entrada ni salida";
+                        }
+
+                        if (isAbsent)
                         {
                             results.Add(new ReportItem
                             {
@@ -387,7 +401,7 @@ namespace MiSistemaAsistencia.Web.Controllers
                                 Department = user.Department?.Name ?? "N/A",
                                 Date = day,
                                 Status = "Ausente",
-                                Comments = "Sin registro"
+                                Comments = comments
                             });
                         }
                     }
